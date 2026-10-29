@@ -14,7 +14,7 @@
   body { font-family: system-ui, Segoe UI, sans-serif; background: var(--bg); color: var(--text); display: flex; }
   #side { width: 200px; background: var(--panel); border-right: 1px solid var(--border); padding: 12px; overflow-y: auto; }
   #side h3 { margin: 0 0 8px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-  #side div { padding: 4px 0; font-size: 14px; }
+  #side div { padding: 4px 0; font-size: .9em; }
   #side div::before { content: "● "; color: #3bb55e; }
   #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
@@ -29,6 +29,15 @@
   button { padding: 0 14px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font: inherit; cursor: pointer; }
   button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); font-size: 18px; }
   #drop { display: none; position: fixed; inset: 0; background: rgba(47,111,237,.15); border: 3px dashed var(--accent); align-items: center; justify-content: center; font-size: 22px; z-index: 9; }
+  #settings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 10; }
+  #settings .card { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 18px; width: min(360px, 92vw); display: flex; flex-direction: column; gap: 12px; }
+  #settings h3 { margin: 0; }
+  #settings label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; }
+  #settings input[type=text] { width: 190px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+  #settings input[type=color] { width: 48px; height: 28px; padding: 0; border: 1px solid var(--border); background: none; }
+  #settings .row { display: flex; gap: 8px; justify-content: flex-end; }
+  #settings button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); padding: 8px 14px; }
+  #settings button { padding: 8px 14px; }
   @media (max-width: 600px) { #side { display: none; } }
 </style>
 </head>
@@ -39,12 +48,28 @@
   <div id="typing"></div>
   <div id="bar">
     <button class="ghost" id="attach" title="Send file">📎</button>
+    <button class="ghost" id="sound" title="Sound on/off">🔊</button>
+    <button class="ghost" id="gear" title="Settings">⚙️</button>
     <input type="file" id="fileInput" hidden>
     <input id="text" placeholder="Type a message..." autocomplete="off">
     <button id="send">Send</button>
   </div>
 </div>
 <div id="drop">Drop file to send</div>
+<div id="settings">
+  <div class="card">
+    <h3>Settings</h3>
+    <label>Tab title <input type="text" id="setTitle" maxlength="40"></label>
+    <label>Username <input type="text" id="setName" maxlength="30"></label>
+    <label>Background color <input type="color" id="setBg"></label>
+    <label>Text color <input type="color" id="setFg"></label>
+    <label>Font size <span><input type="range" id="setSize" min="12" max="24" step="1"> <span id="sizeVal"></span></span></label>
+    <div class="row">
+      <button class="secondary" id="setReset">Reset</button>
+      <button id="setClose">Done</button>
+    </div>
+  </div>
+</div>
 
 <script>
 let name = localStorage.getItem('chatName');
@@ -94,7 +119,7 @@ function connect() {
     if (m.type === 'history') { messages.innerHTML = ''; m.messages.forEach(addMessage); messages.scrollTop = messages.scrollHeight; }
     else if (m.type === 'chat' || m.type === 'file') {
       addMessage(m);
-      if (m.user !== name && document.hidden) { document.title = '● New message'; }
+      if (m.user !== name) notify();
     }
     else if (m.type === 'users') {
       $('users').innerHTML = '';
@@ -109,7 +134,116 @@ function connect() {
   ws.onclose = () => setTimeout(connect, 2000); // auto-reconnect
 }
 connect();
-document.addEventListener('visibilitychange', () => { if (!document.hidden) document.title = 'Office Chat'; });
+// ---- Settings (saved per browser) ----
+const DEFAULTS = { title: 'Office Chat', bg: '', fg: '', size: 16 };
+let settings = { ...DEFAULTS };
+try { settings = { ...DEFAULTS, ...JSON.parse(localStorage.getItem('chatSettings') || '{}') }; } catch {}
+function saveSettings() { try { localStorage.setItem('chatSettings', JSON.stringify(settings)); } catch {} }
+
+function applySettings() {
+  const r = document.documentElement.style;
+  settings.bg ? r.setProperty('--bg', settings.bg) : r.removeProperty('--bg');
+  settings.fg ? r.setProperty('--text', settings.fg) : r.removeProperty('--text');
+  document.body.style.fontSize = settings.size + 'px';
+  updateBadge();
+}
+
+// ---- Sound + unread count ----
+let unread = 0;
+let soundOn = localStorage.getItem('chatSound') !== 'off';
+let audioCtx;
+const favicon = document.createElement('link');
+favicon.rel = 'icon';
+document.head.appendChild(favicon);
+
+function drawFavicon(n) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const x = c.getContext('2d');
+  x.fillStyle = '#2f6fed';
+  x.beginPath(); x.arc(32, 32, 30, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#fff';
+  x.beginPath(); x.arc(32, 30, 14, 0, Math.PI * 2); x.fill();
+  if (n > 0) {
+    x.fillStyle = '#e5334b';
+    x.beginPath(); x.arc(46, 18, 17, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#fff'; x.font = 'bold 22px sans-serif';
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText(n > 9 ? '9+' : String(n), 46, 19);
+  }
+  favicon.href = c.toDataURL('image/png');
+}
+function updateBadge() {
+  const t = settings.title || DEFAULTS.title;
+  document.title = unread ? '(' + unread + ') ' + t : t;
+  drawFavicon(unread);
+}
+function beep() {
+  if (!soundOn) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime, o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(880, t); o.frequency.setValueAtTime(1175, t + 0.12);
+    g.gain.setValueAtTime(0.15, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t); o.stop(t + 0.3);
+  } catch {}
+}
+function notify() {
+  if (!document.hidden && document.hasFocus()) return; // you are looking at the chat
+  unread++; updateBadge(); beep();
+}
+function clearUnread() { if (unread) { unread = 0; updateBadge(); } }
+window.addEventListener('focus', clearUnread);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) clearUnread(); });
+
+$('sound').onclick = () => {
+  soundOn = !soundOn;
+  localStorage.setItem('chatSound', soundOn ? 'on' : 'off');
+  $('sound').textContent = soundOn ? '🔊' : '🔇';
+  beep();
+};
+$('sound').textContent = soundOn ? '🔊' : '🔇';
+// browsers only allow sound after a click: unlock audio on first interaction
+document.addEventListener('click', () => {
+  try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch {}
+}, { once: true });
+
+// ---- Settings panel ----
+function toHex(color) { // computed "rgb(r, g, b)" -> "#rrggbb" for the color inputs
+  const m = color.match(/\d+/g) || [0, 0, 0];
+  return '#' + m.slice(0, 3).map((n) => (+n).toString(16).padStart(2, '0')).join('');
+}
+function openSettings() {
+  const cs = getComputedStyle(document.documentElement);
+  $('setTitle').value = settings.title;
+  $('setName').value = name;
+  $('setBg').value = settings.bg || toHex(getComputedStyle(document.body).backgroundColor);
+  $('setFg').value = settings.fg || toHex(getComputedStyle(document.body).color);
+  $('setSize').value = settings.size;
+  $('sizeVal').textContent = settings.size + 'px';
+  $('settings').style.display = 'flex';
+}
+$('gear').onclick = openSettings;
+$('setClose').onclick = () => { $('settings').style.display = 'none'; };
+$('settings').addEventListener('click', (e) => { if (e.target === $('settings')) $('settings').style.display = 'none'; });
+$('setTitle').oninput = (e) => { settings.title = e.target.value; saveSettings(); applySettings(); };
+$('setBg').oninput = (e) => { settings.bg = e.target.value; saveSettings(); applySettings(); };
+$('setFg').oninput = (e) => { settings.fg = e.target.value; saveSettings(); applySettings(); };
+$('setSize').oninput = (e) => { settings.size = +e.target.value; $('sizeVal').textContent = settings.size + 'px'; saveSettings(); applySettings(); };
+$('setName').onchange = (e) => {
+  const n = e.target.value.trim().slice(0, 30);
+  if (!n || n === name) { e.target.value = name; return; }
+  name = n;
+  localStorage.setItem('chatName', name);
+  if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'join', name })); // updates online list, reloads history
+};
+$('setReset').onclick = () => {
+  settings = { ...DEFAULTS };
+  saveSettings(); applySettings(); openSettings();
+};
+
+applySettings();
 
 function sendText() {
   const t = $('text').value;
