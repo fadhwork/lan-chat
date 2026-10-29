@@ -1,4 +1,4 @@
-name: Build LAN Chat exe
+name: Build LAN Chat Portable
 
 on:
   push:
@@ -17,5 +17,5 @@ jobs:
       - run: npx @yao-pkg/pkg . --targets node20-win-x64 --output lan-chat.exe
       - uses: actions/upload-artifact@v4
         with:
-          name: lan-chat-exe
+          name: lan-chat
           path: lan-chat.exe
