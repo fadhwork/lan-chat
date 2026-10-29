@@ -13,7 +13,17 @@ test('compact chat is a fixed, viewport-overlay panel above page content', () =>
   assert.ok(Number(style.match(/z-index:\s*(\d+)/)[1]) > 1000);
 });
 
-test('client script parses', () => {
+test('client script parses and Pojok uses Picture-in-Picture', () => {
   const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
   assert.doesNotThrow(() => new vm.Script(script));
+  assert.match(html, /documentPictureInPicture\.requestWindow/);
+  assert.match(html, /pip\.addEventListener\('pagehide'/);
+  assert.match(html, /placeholder\.parentNode\.replaceChild\(main, placeholder\)/);
+});
+
+test('compact mode exposes native PiP and restores the page DOM on close', () => {
+  assert.match(html, /id="compactPip"/);
+  assert.match(html, /documentPictureInPicture\.requestWindow/);
+  assert.match(html, /pip\.addEventListener\('pagehide'/);
+  assert.match(html, /placeholder\.parentNode\.replaceChild\(main, placeholder\)/);
 });
