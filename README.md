@@ -45,9 +45,11 @@ Lightweight office chat with file sharing. One PC runs the server; everyone else
 - Admin: Pengaturan -> **Hapus semua chat** menghapus pesan dan file bersama dari server.
 - Ubah di `config.json`: `selfDestruct` (true/false), `secondsPerMessage` (default 15 detik), `maxUnreadHours`.
 
-## Tampilan ringkas mengambang
+## Tampilan pojok dan Picture-in-Picture
 
-- Klik **Ringkas** di bilah chat untuk membuka ruang chat mini yang mengambang di sudut kanan bawah. Mode ini memakai teks 6 piksel dan menyembunyikan daftar pengguna online. Pilihan tersimpan di browser; klik **Normal** untuk kembali.
+- **Pojok** menampilkan mini-chat mengambang di sudut halaman chat.
+- **PiP** membuka mini-chat di jendela Picture-in-Picture browser, di luar tab. Ini memerlukan dukungan Document Picture-in-Picture (mis. Chrome/Edge desktop terbaru) dan konteks aman (localhost atau HTTPS). Jika tidak didukung, aplikasi menampilkan pesan.
+- Di jendela PiP, gunakan **Tutup** atau tutup jendela untuk mengembalikan chat ke halaman.
 
 ## Pengaturan
 
