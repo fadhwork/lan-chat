@@ -21,8 +21,15 @@
   .msg { max-width: 75%; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
   .msg.mine { align-self: flex-end; background: var(--mine); }
   .meta { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
-  .msg img { max-width: min(100%, 80px); max-height: 80px; width: auto; height: auto; object-fit: contain; border-radius: 6px; display: block; margin-top: 4px; resize: both; overflow: auto; cursor: grab; touch-action: none; user-select: none; -webkit-user-drag: none; }
-  .msg img.dragging { position: fixed; z-index: 20; margin: 0; cursor: grabbing; max-width: min(80vw, 80px); max-height: 80vh; }
+  .msg img { max-width: min(100%, 80px); max-height: 80px; width: auto; height: auto; object-fit: contain; border-radius: 6px; display: block; margin-top: 4px; cursor: zoom-in; }
+  #imageFloat { display: none; position: fixed; z-index: 30; top: 72px; left: 50%; transform: translateX(-50%); width: min(360px, 85vw); max-height: 75vh; overflow: hidden; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.3); }
+  #imageFloat.open { display: block; }
+  #imageFloatHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; background: var(--accent); color: #fff; cursor: grab; touch-action: none; user-select: none; }
+  #imageFloatHeader:active { cursor: grabbing; }
+  #imageFloatTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #imageFloatClose { border: 0; border-radius: 6px; padding: 2px 9px; background: rgba(255,255,255,.2); color: #fff; cursor: pointer; }
+  #imageFloatBody { padding: 8px; overflow: auto; max-height: calc(75vh - 42px); text-align: center; }
+  #imageFloatBody img { display: block; max-width: 100%; max-height: calc(75vh - 60px); width: auto; height: auto; margin: 0 auto; object-fit: contain; }
   .msg a { color: var(--accent); }
   #note { display: none; text-align: center; font-size: 12px; color: var(--muted); padding: 6px; background: var(--panel); border-bottom: 1px solid var(--border); }
   #typing { height: 20px; padding: 0 16px; font-size: 12px; color: var(--muted); }
@@ -63,6 +70,10 @@
   </div>
 </div>
 <div id="drop">Lepaskan file untuk mengirim</div>
+<div id="imageFloat" role="dialog" aria-label="Pratinjau gambar">
+  <div id="imageFloatHeader"><span id="imageFloatTitle">Pratinjau gambar</span><button id="imageFloatClose" type="button" aria-label="Tutup">×</button></div>
+  <div id="imageFloatBody"><img id="imageFloatImage" alt="Pratinjau gambar"></div>
+</div>
 <div id="settings">
   <div class="card">
     <h3>Pengaturan</h3>
@@ -116,8 +127,9 @@ function addMessage(m) {
     if (m.file.isImage) {
       const img = document.createElement('img');
       img.src = m.file.url;
-      img.draggable = false;
-      img.addEventListener('pointerdown', startImageDrag);
+      img.alt = m.file.name || 'Gambar';
+      img.title = 'Klik untuk membuka pratinjau mengambang';
+      img.addEventListener('click', () => openImageFloat(m.file.url, m.file.name));
       div.appendChild(img);
     }
   }
@@ -161,38 +173,44 @@ function connect() {
 }
 connect();
 
-// Drag image previews freely over the chat; release returns them to their bubble.
-function startImageDrag(e) {
-  if (e.button !== 0) return;
-  const img = e.currentTarget;
-  const rect = img.getBoundingClientRect();
-  const offsetX = e.clientX - rect.left;
-  const offsetY = e.clientY - rect.top;
-  img.classList.add('dragging');
-  img.style.left = rect.left + 'px';
-  img.style.top = rect.top + 'px';
-  img.style.width = rect.width + 'px';
-  img.style.height = rect.height + 'px';
-  img.setPointerCapture(e.pointerId);
-  const move = (event) => {
-    img.style.left = (event.clientX - offsetX) + 'px';
-    img.style.top = (event.clientY - offsetY) + 'px';
-  };
-  const finish = () => {
-    img.classList.remove('dragging');
-    img.style.removeProperty('left');
-    img.style.removeProperty('top');
-    img.style.removeProperty('width');
-    img.style.removeProperty('height');
-    img.removeEventListener('pointermove', move);
-    img.removeEventListener('pointerup', finish);
-    img.removeEventListener('pointercancel', finish);
-  };
-  img.addEventListener('pointermove', move);
-  img.addEventListener('pointerup', finish);
-  img.addEventListener('pointercancel', finish);
-  e.preventDefault();
+// Click a thumbnail to open a Clippy-style floating preview; drag its header to move it.
+function openImageFloat(url, title) {
+  const panel = $('imageFloat');
+  $('imageFloatImage').src = url;
+  $('imageFloatTitle').textContent = title || 'Pratinjau gambar';
+  panel.classList.add('open');
 }
+function closeImageFloat() {
+  $('imageFloat').classList.remove('open');
+  $('imageFloatImage').removeAttribute('src');
+}
+$('imageFloatClose').onclick = closeImageFloat;
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeImageFloat(); });
+(() => {
+  const panel = $('imageFloat');
+  const header = $('imageFloatHeader');
+  let drag = null;
+  header.addEventListener('pointerdown', (e) => {
+    if (e.target === $('imageFloatClose')) return;
+    const rect = panel.getBoundingClientRect();
+    drag = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    panel.style.left = rect.left + 'px';
+    panel.style.top = rect.top + 'px';
+    panel.style.transform = 'none';
+    header.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  header.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const left = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, e.clientX - drag.x));
+    const top = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, e.clientY - drag.y));
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+  });
+  const stop = () => { drag = null; };
+  header.addEventListener('pointerup', stop);
+  header.addEventListener('pointercancel', stop);
+})();
 // ---- Self-destruct: report what was read, remove what the server says has vanished ----
 function showNote(m) {
   const n = $('note');
