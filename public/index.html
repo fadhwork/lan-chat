@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>New Tab</title>
+<title>Chat LAN</title>
 <style>
   :root { --bg:#f4f5f7; --panel:#fff; --text:#1d1f23; --muted:#7a8088; --accent:#2f6fed; --mine:#dce8ff; --border:#e2e5ea; }
   @media (prefers-color-scheme: dark) {
@@ -18,10 +18,18 @@
   #side div::before { content: "● "; color: #3bb55e; }
   #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-  .msg { max-width: 75%; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; word-wrap: break-word; white-space: pre-wrap; }
+  .msg { max-width: 75%; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
   .msg.mine { align-self: flex-end; background: var(--mine); }
   .meta { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
-  .msg img { max-width: 100%; max-height: 260px; border-radius: 6px; display: block; margin-top: 4px; }
+  .msg img { max-width: min(100%, 80px); max-height: 80px; width: auto; height: auto; object-fit: contain; border-radius: 6px; display: block; margin-top: 4px; cursor: zoom-in; }
+  #imageFloat { display: none; position: fixed; z-index: 30; top: 72px; left: 50%; transform: translateX(-50%); width: min(360px, 85vw); max-height: 75vh; overflow: hidden; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.3); }
+  #imageFloat.open { display: block; }
+  #imageFloatHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; background: var(--accent); color: #fff; cursor: grab; touch-action: none; user-select: none; }
+  #imageFloatHeader:active { cursor: grabbing; }
+  #imageFloatTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #imageFloatClose { border: 0; border-radius: 6px; padding: 2px 9px; background: rgba(255,255,255,.2); color: #fff; cursor: pointer; }
+  #imageFloatBody { padding: 8px; overflow: auto; max-height: calc(75vh - 42px); text-align: center; }
+  #imageFloatBody img { display: block; max-width: 100%; max-height: calc(75vh - 60px); width: auto; height: auto; margin: 0 auto; object-fit: contain; }
   .msg a { color: var(--accent); }
   #note { display: none; text-align: center; font-size: 12px; color: var(--muted); padding: 6px; background: var(--panel); border-bottom: 1px solid var(--border); }
   #typing { height: 20px; padding: 0 16px; font-size: 12px; color: var(--muted); }
@@ -47,40 +55,44 @@
 </style>
 </head>
 <body>
-<div id="side"><h3>Online</h3><div id="users"></div></div>
+<div id="side"><h3>Sedang online</h3><div id="users"></div></div>
 <div id="main">
   <div id="note"></div>
   <div id="messages"></div>
   <div id="typing"></div>
   <div id="bar">
-    <button class="ghost" id="attach" title="Send file">📎</button>
-    <button class="ghost" id="sound" title="Sound on/off">🔊</button>
-    <button class="ghost" id="gear" title="Settings">⚙️</button>
+    <button class="ghost" id="attach" title="Kirim file">📎</button>
+    <button class="ghost" id="sound" title="Suara aktif/nonaktif">🔊</button>
+    <button class="ghost" id="gear" title="Pengaturan">⚙️</button>
     <input type="file" id="fileInput" hidden>
-    <input id="text" placeholder="Type a message..." autocomplete="off">
-    <button id="send">Send</button>
+    <input id="text" placeholder="Tulis pesan..." autocomplete="off">
+    <button id="send">Kirim</button>
   </div>
 </div>
-<div id="drop">Drop file to send</div>
+<div id="drop">Lepaskan file untuk mengirim</div>
+<div id="imageFloat" role="dialog" aria-label="Pratinjau gambar">
+  <div id="imageFloatHeader"><span id="imageFloatTitle">Pratinjau gambar</span><button id="imageFloatClose" type="button" aria-label="Tutup">×</button></div>
+  <div id="imageFloatBody"><img id="imageFloatImage" alt="Pratinjau gambar"></div>
+</div>
 <div id="settings">
   <div class="card">
-    <h3>Settings</h3>
-    <label>Tab title <input type="text" id="setTitle" maxlength="40"></label>
-    <label>Username <input type="text" id="setName" maxlength="30"></label>
-    <label>Background color <input type="color" id="setBg"></label>
-    <label>Text color <input type="color" id="setFg"></label>
-    <label>Font size <span><input type="range" id="setSize" min="12" max="24" step="1"> <span id="sizeVal"></span></span></label>
+    <h3>Pengaturan</h3>
+    <label>Judul tab <input type="text" id="setTitle" maxlength="40"></label>
+    <label>Nama pengguna <input type="text" id="setName" maxlength="30"></label>
+    <label>Warna latar <input type="color" id="setBg"></label>
+    <label>Warna teks <input type="color" id="setFg"></label>
+    <label>Ukuran huruf <span><input type="range" id="setSize" min="12" max="24" step="1"> <span id="sizeVal"></span></span></label>
     <div id="adminBox"></div>
     <div class="row">
-      <button class="secondary" id="setReset">Reset</button>
-      <button id="setClose">Done</button>
+      <button class="secondary" id="setReset">Atur ulang</button>
+      <button id="setClose">Selesai</button>
     </div>
   </div>
 </div>
 
 <script>
 let name = localStorage.getItem('chatName');
-while (!name || !name.trim()) name = prompt('Your name:') || '';
+while (!name || !name.trim()) name = prompt('Masukkan nama Anda:') || '';
 name = name.trim().slice(0, 30);
 localStorage.setItem('chatName', name);
 
@@ -115,6 +127,9 @@ function addMessage(m) {
     if (m.file.isImage) {
       const img = document.createElement('img');
       img.src = m.file.url;
+      img.alt = m.file.name || 'Gambar';
+      img.title = 'Klik untuk membuka pratinjau mengambang';
+      img.addEventListener('click', () => openImageFloat(m.file.url, m.file.name));
       div.appendChild(img);
     }
   }
@@ -142,14 +157,14 @@ function connect() {
       name = m.name; localStorage.setItem('chatName', name);
       if ($('setName')) $('setName').value = name;
     }
-    else if (m.type === 'error') { alert(m.message); }
+    else if (m.type === 'error') { alert(m.message === 'Wrong admin password' ? 'Kata sandi admin salah' : m.message === 'That name is already used by someone' ? 'Nama tersebut sudah digunakan orang lain' : m.message); }
     else if (m.type === 'users') {
       onlineUsers = m.users; refreshAdmin();
       $('users').innerHTML = '';
       m.users.forEach((u) => { const d = document.createElement('div'); d.textContent = u; $('users').appendChild(d); });
     }
     else if (m.type === 'typing') {
-      $('typing').textContent = m.user + ' is typing...';
+      $('typing').textContent = m.user + ' sedang mengetik...';
       clearTimeout(typingTimer);
       typingTimer = setTimeout(() => $('typing').textContent = '', 1500);
     }
@@ -157,10 +172,49 @@ function connect() {
   ws.onclose = () => setTimeout(connect, 2000); // auto-reconnect
 }
 connect();
+
+// Click a thumbnail to open a Clippy-style floating preview; drag its header to move it.
+function openImageFloat(url, title) {
+  const panel = $('imageFloat');
+  $('imageFloatImage').src = url;
+  $('imageFloatTitle').textContent = title || 'Pratinjau gambar';
+  panel.classList.add('open');
+}
+function closeImageFloat() {
+  $('imageFloat').classList.remove('open');
+  $('imageFloatImage').removeAttribute('src');
+}
+$('imageFloatClose').onclick = closeImageFloat;
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeImageFloat(); });
+(() => {
+  const panel = $('imageFloat');
+  const header = $('imageFloatHeader');
+  let drag = null;
+  header.addEventListener('pointerdown', (e) => {
+    if (e.target === $('imageFloatClose')) return;
+    const rect = panel.getBoundingClientRect();
+    drag = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    panel.style.left = rect.left + 'px';
+    panel.style.top = rect.top + 'px';
+    panel.style.transform = 'none';
+    header.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  header.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const left = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, e.clientX - drag.x));
+    const top = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, e.clientY - drag.y));
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+  });
+  const stop = () => { drag = null; };
+  header.addEventListener('pointerup', stop);
+  header.addEventListener('pointercancel', stop);
+})();
 // ---- Self-destruct: report what was read, remove what the server says has vanished ----
 function showNote(m) {
   const n = $('note');
-  if (m.selfDestruct) { n.textContent = 'Messages disappear after being read (' + m.seconds + ' s each)'; n.style.display = 'block'; }
+  if (m.selfDestruct) { n.textContent = 'Pesan akan terhapus setelah dibaca (' + m.seconds + ' detik per pesan)'; n.style.display = 'block'; }
   else n.style.display = 'none';
 }
 function flushSeen() {
@@ -177,7 +231,7 @@ function removeMessages(ids) {
 }
 
 // ---- Settings (saved per browser) ----
-const DEFAULTS = { title: 'New Tab', bg: '', fg: '', size: 16 };
+const DEFAULTS = { title: 'Chat LAN', bg: '', fg: '', size: 16 };
 let settings = { ...DEFAULTS };
 try { settings = { ...DEFAULTS, ...JSON.parse(localStorage.getItem('chatSettings') || '{}') }; } catch {}
 function saveSettings() { try { localStorage.setItem('chatSettings', JSON.stringify(settings)); } catch {} }
@@ -261,7 +315,7 @@ function renderAdmin() {
   box.innerHTML = '';
   if (isAdmin) {
     const h = document.createElement('h4');
-    h.textContent = 'Admin: rename users';
+    h.textContent = 'Admin: ubah nama pengguna';
     box.appendChild(h);
     onlineUsers.forEach((u) => {
       const row = document.createElement('div');
@@ -269,7 +323,7 @@ function renderAdmin() {
       const inp = document.createElement('input');
       inp.type = 'text'; inp.value = u; inp.maxLength = 30;
       const btn = document.createElement('button');
-      btn.textContent = 'Rename';
+      btn.textContent = 'Ganti nama';
       btn.onclick = () => {
         const n = inp.value.trim();
         if (n && n !== u && ws.readyState === 1) ws.send(JSON.stringify({ type: 'rename', target: u, newName: n }));
@@ -279,17 +333,17 @@ function renderAdmin() {
     });
     const clr = document.createElement('button');
     clr.className = 'secondary';
-    clr.textContent = 'Clear all chats';
+    clr.textContent = 'Hapus semua chat';
     clr.onclick = () => {
-      if (confirm('Delete ALL messages and uploaded files for everyone?') && ws.readyState === 1) ws.send(JSON.stringify({ type: 'clearAll' }));
+      if (confirm('Hapus SEMUA pesan dan file yang diunggah untuk semua orang?') && ws.readyState === 1) ws.send(JSON.stringify({ type: 'clearAll' }));
     };
     box.appendChild(clr);
   } else if (canLogin) {
     const btn = document.createElement('button');
     btn.className = 'secondary';
-    btn.textContent = 'Admin login';
+    btn.textContent = 'Masuk sebagai admin';
     btn.onclick = () => {
-      const pw = prompt('Admin password:');
+      const pw = prompt('Kata sandi admin:');
       if (pw && ws.readyState === 1) ws.send(JSON.stringify({ type: 'adminLogin', password: pw }));
     };
     box.appendChild(btn);
@@ -345,15 +399,15 @@ async function uploadFile(file) {
   if (!file) return;
   const fd = new FormData();
   fd.append('file', file);
-  $('typing').textContent = 'Uploading ' + file.name + '...';
+  $('typing').textContent = 'Mengunggah ' + file.name + '...';
   try {
     const res = await fetch('/upload', { method: 'POST', body: fd });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    if (!res.ok) throw new Error(data.error || 'Upload gagal');
     ws.send(JSON.stringify({ type: 'file', file: data }));
     $('typing').textContent = '';
   } catch (err) {
-    $('typing').textContent = 'Upload failed: ' + err.message;
+    $('typing').textContent = 'Gagal mengunggah: ' + err.message;
   }
 }
 $('attach').onclick = () => $('fileInput').click();
