@@ -41,6 +41,13 @@
   body.pip-mode #side, body.pip-mode #imageFloat, body.pip-mode #settings, body.pip-mode #drop { display: none !important; }
   body.pip-mode #main { position: static !important; z-index: auto !important; width: 100% !important; height: 100% !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
   body.pip-mode #messages { min-height: 0; }
+  #compactHandle { display: none; flex: none; position: relative; height: 10px; cursor: grab; touch-action: none; background: var(--panel); border-bottom: 1px solid var(--border); }
+  #compactHandle::after { content: ""; position: absolute; left: 50%; top: 3px; width: 28px; height: 3px; margin-left: -14px; border-radius: 2px; background: var(--muted); opacity: .6; }
+  #compactHandle:active { cursor: grabbing; }
+  body.compact #compactHandle { display: block; }
+  body.pip-mode #compactHandle { display: none !important; }
+  #pipNote { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; color: var(--muted); }
+  body.pip-mode #pipNote { display: flex; }
   body.compact #bar #compactClear { display: inline-block !important; font-size: 6px; padding: 3px 5px; }
   .meta { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
   .msg img { max-width: min(100%, 80px); max-height: 80px; width: auto; height: auto; object-fit: contain; border-radius: 6px; display: block; margin-top: 4px; cursor: zoom-in; }
@@ -83,6 +90,7 @@
 <body>
 <div id="side"><h3>Sedang online</h3><div id="users"></div></div>
 <div id="main">
+  <div id="compactHandle" title="Seret untuk memindahkan"></div>
   <div id="note"></div>
   <div id="messages"></div>
   <div id="typing"></div>
@@ -98,6 +106,7 @@
     <button id="send">Kirim</button>
   </div>
 </div>
+<div id="pipNote"><div>Chat sedang tampil di jendela mengambang.</div><button id="pipReturn" type="button">Kembalikan chat ke sini</button></div>
 <div id="drop">Lepaskan file untuk mengirim</div>
 <div id="imageFloat" role="dialog" aria-label="Pratinjau gambar">
   <div id="imageFloatHeader"><span id="imageFloatTitle">Pratinjau gambar</span><button id="imageFloatClose" type="button" aria-label="Tutup">×</button></div>
@@ -125,7 +134,11 @@ while (!name || !name.trim()) name = prompt('Masukkan nama Anda:') || '';
 name = name.trim().slice(0, 30);
 localStorage.setItem('chatName', name);
 
-const $ = (id) => document.getElementById(id);
+let pipWindow = null;
+const pipOpen = () => !!(pipWindow && !pipWindow.closed);
+const pipSupported = () => 'documentPictureInPicture' in window; // Chrome/Edge, HTTPS or localhost only
+// The chat panel can live in the Picture-in-Picture window, so look in both documents.
+const $ = (id) => document.getElementById(id) || (pipOpen() ? pipWindow.document.getElementById(id) : null);
 const messages = $('messages');
 const main = $('main');
 let ws;
@@ -133,7 +146,7 @@ let isAdmin = false, canLogin = false, onlineUsers = [];
 const unseenIds = new Set(); // messages from others that are on screen but not yet reported as read
 let imagePreviewCount = 0;
 let compactMode = localStorage.getItem('chatCompactMode') === 'on';
-let pipWindow = null;
+if (pipSupported()) compactMode = false; // Pojok opens the floating PiP window instead of the in-tab panel
 
 function fmtSize(b) { return b > 1048576 ? (b/1048576).toFixed(1)+' MB' : Math.max(1, Math.round(b/1024))+' KB'; }
 function fmtTime(t) { return new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
@@ -211,7 +224,7 @@ function applyCompactMode() {
   const button = $('compactToggle');
   button.setAttribute('aria-pressed', String(compactMode));
   button.textContent = compactMode ? 'Normal' : 'Pojok';
-  button.title = compactMode ? 'Kembali ke tampilan normal' : 'Tampilan pojok di browser';
+  button.title = compactMode ? 'Kembali ke tampilan normal' : pipSupported() ? 'Buka chat di jendela mengambang (Picture-in-Picture)' : 'Tampilan pojok di browser';
   syncCompactAdminButton();
 }
 function syncCompactAdminButton() {
@@ -224,42 +237,88 @@ $('compactClear').addEventListener('click', () => {
 });
 $('compactPip').addEventListener('click', openCompactPiP);
 $('compactToggle').addEventListener('click', () => {
-  if (pipWindow) { if (!pipWindow.closed) pipWindow.close(); return; }
-  compactMode = !compactMode;
+  if (pipOpen()) { pipWindow.close(); return; }
+  if (!compactMode && pipSupported()) { openCompactPiP(); return; } // floating window outside the tab
+  compactMode = !compactMode;                                       // fallback: floating panel inside the tab
   localStorage.setItem('chatCompactMode', compactMode ? 'on' : 'off');
   applyCompactMode();
 });
+$('pipReturn').addEventListener('click', () => { if (pipOpen()) pipWindow.close(); });
+function floatInTab() {
+  compactMode = true;
+  localStorage.setItem('chatCompactMode', 'on');
+  applyCompactMode();
+}
 async function openCompactPiP() {
-  if (pipWindow && !pipWindow.closed) { pipWindow.focus(); return; }
-  if (!('documentPictureInPicture' in window)) {
-    alert('Picture-in-Picture tidak didukung browser ini. Gunakan Chrome atau Edge versi terbaru.');
-    return;
-  }
+  if (pipOpen()) { pipWindow.focus(); return; }
+  if (!pipSupported()) { floatInTab(); return; }
   try {
     const pip = await window.documentPictureInPicture.requestWindow({ width: 360, height: 460 });
     pipWindow = pip;
     pip.document.documentElement.lang = 'id';
+    pip.document.documentElement.style.cssText = document.documentElement.style.cssText; // custom colors
     const base = document.createElement('base'); base.href = location.href; pip.document.head.appendChild(base);
     document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => pip.document.head.appendChild(node.cloneNode(true)));
     const pipStyle = document.createElement('style');
-    pipStyle.textContent = 'html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font:6px system-ui,sans-serif}body{display:block}#side,#imageFloat,#settings,#drop{display:none!important}#main{position:static!important;z-index:auto!important;width:100%!important;height:100%!important;border:0!important;border-radius:0!important;box-shadow:none!important}#messages{min-height:0}';
+    pipStyle.textContent = 'html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font:6px system-ui,sans-serif}body{display:block}#side,#imageFloat,#settings,#drop,#compactHandle,#pipNote{display:none!important}#main{position:static!important;z-index:auto!important;width:100%!important;height:100%!important;border:0!important;border-radius:0!important;box-shadow:none!important}#messages{min-height:0}';
     pip.document.head.appendChild(pipStyle);
+    const closeBtn = $('compactPip');
+    closeBtn.textContent = 'Tutup';
+    closeBtn.title = 'Tutup jendela Picture-in-Picture';
+    closeBtn.onclick = () => { if (pipOpen()) pipWindow.close(); };
     const placeholder = document.createComment('Pojok PiP return point');
     const home = main.parentNode; home.insertBefore(placeholder, main);
     pip.document.body.appendChild(main);
     document.body.classList.add('pip-mode');
+    compactMode = false; applyCompactMode();
+    messages.scrollTop = messages.scrollHeight;
     pip.addEventListener('pagehide', () => {
       if (placeholder.parentNode) placeholder.parentNode.replaceChild(main, placeholder);
       document.body.classList.remove('pip-mode'); pipWindow = null;
+      applyCompactMode(); messages.scrollTop = messages.scrollHeight;
     }, { once: true });
-    pip.document.getElementById('compactPip').textContent = 'Tutup';
-    pip.document.getElementById('compactPip').title = 'Tutup jendela Picture-in-Picture';
-    pip.document.getElementById('compactPip').addEventListener('click', () => pip.close());
+    flushSeen(); // the floating window counts as "reading"
   } catch (error) {
     pipWindow = null;
-    alert('Gagal membuka Picture-in-Picture: ' + (error?.message || error));
+    console.warn('Picture-in-Picture gagal, memakai panel pojok di dalam tab:', error);
+    floatInTab();
   }
 }
+
+// In-tab fallback: drag the panel by its handle; it snaps to the nearest corner and remembers it.
+function placeCompact(corner) { // 'tl' | 'tr' | 'bl' | 'br'
+  const top = corner[0] === 't', left = corner[1] === 'l', st = main.style;
+  st.top = top ? '12px' : 'auto'; st.bottom = top ? 'auto' : '12px';
+  st.left = left ? '12px' : 'auto'; st.right = left ? 'auto' : '12px';
+}
+placeCompact(localStorage.getItem('chatCompactCorner') || 'br');
+(() => {
+  const handle = $('compactHandle');
+  let drag = null;
+  handle.addEventListener('pointerdown', (e) => {
+    const r = main.getBoundingClientRect();
+    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    main.style.left = r.left + 'px'; main.style.top = r.top + 'px';
+    main.style.right = 'auto'; main.style.bottom = 'auto';
+    if (handle.setPointerCapture) handle.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  handle.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const maxL = Math.max(0, window.innerWidth - main.offsetWidth), maxT = Math.max(0, window.innerHeight - main.offsetHeight);
+    main.style.left = Math.min(Math.max(0, e.clientX - drag.dx), maxL) + 'px';
+    main.style.top = Math.min(Math.max(0, e.clientY - drag.dy), maxT) + 'px';
+  });
+  const stop = (e) => {
+    if (!drag) return;
+    drag = null;
+    const corner = (e.clientY < window.innerHeight / 2 ? 't' : 'b') + (e.clientX < window.innerWidth / 2 ? 'l' : 'r');
+    localStorage.setItem('chatCompactCorner', corner);
+    placeCompact(corner);
+  };
+  handle.addEventListener('pointerup', stop);
+  handle.addEventListener('pointercancel', stop);
+})();
 applyCompactMode();
 
 // Click a thumbnail to open a Clippy-style floating preview; drag its header to move it.
@@ -307,7 +366,7 @@ function showNote(m) {
   else n.style.display = 'none';
 }
 function flushSeen() {
-  if (document.visibilityState !== 'visible' || !unseenIds.size || !ws || ws.readyState !== 1) return;
+  if (!(document.visibilityState === 'visible' || pipOpen()) || !unseenIds.size || !ws || ws.readyState !== 1) return;
   ws.send(JSON.stringify({ type: 'seen', ids: [...unseenIds] }));
   unseenIds.clear();
 }
@@ -375,6 +434,7 @@ function beep() {
   } catch {}
 }
 function notify() {
+  if (pipOpen()) { if (document.hidden || !document.hasFocus()) beep(); return; } // chat is in the floating window: sound only
   if (!document.hidden && document.hasFocus()) return; // you are looking at the chat
   unread++; updateBadge(); beep();
 }

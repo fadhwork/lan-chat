@@ -27,3 +27,14 @@ test('compact mode exposes native PiP and restores the page DOM on close', () =>
   assert.match(html, /pip\.addEventListener\('pagehide'/);
   assert.match(html, /placeholder\.parentNode\.replaceChild\(main, placeholder\)/);
 });
+
+test('Pojok opens the PiP window when supported and falls back to a draggable in-tab panel', () => {
+  assert.match(html, /!compactMode && pipSupported\(\)\) \{ openCompactPiP\(\)/);
+  assert.match(html, /function floatInTab\(\)/);
+  assert.match(html, /id="compactHandle"/);
+});
+
+test('element lookups also work while the chat lives in the PiP window', () => {
+  assert.match(html, /pipOpen\(\) \? pipWindow\.document\.getElementById\(id\)/);
+  assert.match(html, /id="pipNote"/);
+});

@@ -47,9 +47,10 @@ Lightweight office chat with file sharing. One PC runs the server; everyone else
 
 ## Tampilan pojok dan Picture-in-Picture
 
-- **Pojok** menampilkan mini-chat mengambang di sudut halaman chat.
-- **PiP** membuka mini-chat di jendela Picture-in-Picture browser, di luar tab. Ini memerlukan dukungan Document Picture-in-Picture (mis. Chrome/Edge desktop terbaru) dan konteks aman (localhost atau HTTPS). Jika tidak didukung, aplikasi menampilkan pesan.
-- Di jendela PiP, gunakan **Tutup** atau tutup jendela untuk mengembalikan chat ke halaman.
+- Tombol **Pojok** membuka chat di jendela mengambang (Picture-in-Picture) yang tetap di atas aplikasi lain, di luar tab. Klik **Tutup** di jendela itu (atau **Kembalikan chat ke sini** di tab) untuk mengembalikan chat ke halaman. Pesan yang tampil di jendela ini dianggap sudah dibaca, dan suara pesan baru tetap berbunyi saat tab tidak aktif.
+- Picture-in-Picture memerlukan Chrome/Edge desktop terbaru dan konteks aman (`localhost` atau HTTPS). Pada alamat biasa seperti `http://192.168.1.20:3000`, browser menyembunyikan fitur ini.
+- Jika tidak tersedia (alamat `http://` biasa, Firefox, Safari), **Pojok** menampilkan panel mengambang kecil di dalam tab. Seret garis di bagian atasnya untuk memindahkan; panel menempel ke sudut terdekat dan posisinya diingat.
+- Agar PiP asli berfungsi lewat alamat IP kantor di Chrome/Edge: buka `chrome://flags/#unsafely-treat-insecure-origin-as-secure` (Edge: `edge://flags/#unsafely-treat-insecure-origin-as-secure`), tambahkan alamat server (mis. `http://192.168.1.20:3000`), pilih Enabled, lalu mulai ulang browser. Pengaturan ini berlaku per komputer.
 
 ## Pengaturan
 
