@@ -236,7 +236,6 @@ wss.on('connection', (ws, req) => {
       for (const c of targets) { clients.set(c, newName); send(c, { type: 'renamed', name: newName }); }
       persist();
       broadcastUsers();
-      broadcast({ type: 'chat', user: 'System', text: `Admin renamed ${target} to ${newName}`, time: Date.now() });
     } else if (m.type === 'clearAll') {
       if (!ws.isAdmin) return;
       messages = [];
@@ -245,7 +244,6 @@ wss.on('connection', (ws, req) => {
       try { for (const f of fs.readdirSync(UPLOAD_DIR)) fs.unlink(path.join(UPLOAD_DIR, f), () => {}); } catch {}
       persist();
       broadcast({ type: 'cleared' });
-      broadcast({ type: 'chat', user: 'System', text: `Admin ${user} cleared all chats`, time: Date.now() });
     } else if (m.type === 'typing') {
       for (const [c, n] of clients) if (c !== ws) send(c, { type: 'typing', user });
     }
