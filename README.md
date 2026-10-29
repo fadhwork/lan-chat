@@ -2,6 +2,19 @@
 
 Lightweight office chat with file sharing. One PC runs the server; everyone else just opens a link in the browser.
 
+## Easiest: download the ready-made exe (no Node/npm needed)
+
+1. Put this folder in a GitHub repo (the `.github/workflows/build.yml` file builds it).
+2. On GitHub open the **Actions** tab, open the latest run, and download **lan-chat-exe**.
+3. Unzip it and double-click **lan-chat.exe**. It creates `uploads` and `history.jsonl` next to itself.
+
+## Alternative: portable folder (needs node.exe)
+
+1. Download Node.js **"Windows Binary (.zip)"** from nodejs.org/en/download (not the installer).
+2. Open the zip and copy **`node.exe`** into this folder, next to `server.js`.
+3. On any PC that has Node/npm, open a terminal in this folder and run `npm install`. This creates the `node_modules` folder.
+4. Zip the whole `lan-chat` folder. It now runs on any Windows PC with no installation.
+
 ## Run it
 
 1. Double-click **`start.bat`**.
@@ -13,6 +26,14 @@ Lightweight office chat with file sharing. One PC runs the server; everyone else
 
 - `history.jsonl` - chat history (delete it to clear history)
 - `uploads/` - shared files (clean it up now and then)
+
+## Admin (rename other users)
+
+- Whoever runs the app is admin automatically: any browser on the PC that runs the server (via `localhost` or that PC's own IP link) gets the admin tools.
+- To be admin from another PC, create `config.json` next to `server.js` / `lan-chat.exe`
+  (copy `config.example.json`) and set `adminPassword`. Then in the chat open Settings (gear) and click **Admin login**.
+- Set `"localhostAdmin": false` to require the password everywhere.
+- Admins see a list of online users in Settings and can rename anyone. Old messages keep the old name.
 
 ## Settings
 

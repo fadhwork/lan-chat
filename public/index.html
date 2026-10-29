@@ -31,7 +31,11 @@
   #drop { display: none; position: fixed; inset: 0; background: rgba(47,111,237,.15); border: 3px dashed var(--accent); align-items: center; justify-content: center; font-size: 22px; z-index: 9; }
   #settings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 10; }
   #settings .card { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 18px; width: min(360px, 92vw); display: flex; flex-direction: column; gap: 12px; }
+  #settings .card { max-height: 90vh; overflow-y: auto; }
   #settings h3 { margin: 0; }
+  #adminBox h4 { margin: 4px 0 8px; }
+  #adminBox .arow { display: flex; gap: 6px; margin-bottom: 6px; }
+  #settings .arow input[type=text] { flex: 1; width: auto; min-width: 0; }
   #settings label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; }
   #settings input[type=text] { width: 190px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
   #settings input[type=color] { width: 48px; height: 28px; padding: 0; border: 1px solid var(--border); background: none; }
@@ -64,6 +68,7 @@
     <label>Background color <input type="color" id="setBg"></label>
     <label>Text color <input type="color" id="setFg"></label>
     <label>Font size <span><input type="range" id="setSize" min="12" max="24" step="1"> <span id="sizeVal"></span></span></label>
+    <div id="adminBox"></div>
     <div class="row">
       <button class="secondary" id="setReset">Reset</button>
       <button id="setClose">Done</button>
@@ -80,6 +85,7 @@ localStorage.setItem('chatName', name);
 const $ = (id) => document.getElementById(id);
 const messages = $('messages');
 let ws;
+let isAdmin = false, canLogin = false, onlineUsers = [];
 
 function fmtSize(b) { return b > 1048576 ? (b/1048576).toFixed(1)+' MB' : Math.max(1, Math.round(b/1024))+' KB'; }
 function fmtTime(t) { return new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
@@ -121,7 +127,14 @@ function connect() {
       addMessage(m);
       if (m.user !== name) notify();
     }
+    else if (m.type === 'role') { isAdmin = m.admin; canLogin = m.canLogin; refreshAdmin(); }
+    else if (m.type === 'renamed') {
+      name = m.name; localStorage.setItem('chatName', name);
+      if ($('setName')) $('setName').value = name;
+    }
+    else if (m.type === 'error') { alert(m.message); }
     else if (m.type === 'users') {
+      onlineUsers = m.users; refreshAdmin();
       $('users').innerHTML = '';
       m.users.forEach((u) => { const d = document.createElement('div'); d.textContent = u; $('users').appendChild(d); });
     }
@@ -214,6 +227,39 @@ function toHex(color) { // computed "rgb(r, g, b)" -> "#rrggbb" for the color in
   const m = color.match(/\d+/g) || [0, 0, 0];
   return '#' + m.slice(0, 3).map((n) => (+n).toString(16).padStart(2, '0')).join('');
 }
+function renderAdmin() {
+  const box = $('adminBox');
+  box.innerHTML = '';
+  if (isAdmin) {
+    const h = document.createElement('h4');
+    h.textContent = 'Admin: rename users';
+    box.appendChild(h);
+    onlineUsers.forEach((u) => {
+      const row = document.createElement('div');
+      row.className = 'arow';
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.value = u; inp.maxLength = 30;
+      const btn = document.createElement('button');
+      btn.textContent = 'Rename';
+      btn.onclick = () => {
+        const n = inp.value.trim();
+        if (n && n !== u && ws.readyState === 1) ws.send(JSON.stringify({ type: 'rename', target: u, newName: n }));
+      };
+      row.append(inp, btn);
+      box.appendChild(row);
+    });
+  } else if (canLogin) {
+    const btn = document.createElement('button');
+    btn.className = 'secondary';
+    btn.textContent = 'Admin login';
+    btn.onclick = () => {
+      const pw = prompt('Admin password:');
+      if (pw && ws.readyState === 1) ws.send(JSON.stringify({ type: 'adminLogin', password: pw }));
+    };
+    box.appendChild(btn);
+  }
+}
+function refreshAdmin() { if ($('settings').style.display === 'flex') renderAdmin(); }
 function openSettings() {
   const cs = getComputedStyle(document.documentElement);
   $('setTitle').value = settings.title;
@@ -222,6 +268,7 @@ function openSettings() {
   $('setFg').value = settings.fg || toHex(getComputedStyle(document.body).color);
   $('setSize').value = settings.size;
   $('sizeVal').textContent = settings.size + 'px';
+  renderAdmin();
   $('settings').style.display = 'flex';
 }
 $('gear').onclick = openSettings;
