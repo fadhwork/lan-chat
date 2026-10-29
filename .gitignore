@@ -2,3 +2,5 @@ node_modules/
 uploads/
 history.jsonl
 lan-chat.exe
+seen.json
+config.json

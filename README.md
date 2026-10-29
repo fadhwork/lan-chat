@@ -35,6 +35,16 @@ Lightweight office chat with file sharing. One PC runs the server; everyone else
 - Set `"localhostAdmin": false` to require the password everywhere.
 - Admins see a list of online users in Settings and can rename anyone. Old messages keep the old name.
 
+## Self-destructing messages
+
+- A message vanishes from your screen 30 seconds after you read it. If several arrive at once, they vanish one after another (30 s, 60 s, 90 s...).
+- "Read" means the chat tab is open and visible. Messages you write vanish from your own screen the same way.
+- A person is identified by their username. Someone who hasn't opened the chat yet still sees the message when they do, and their timer starts then.
+- A message is deleted from the server (with its uploaded file) when everyone it was meant for has read it and their timers ended, or after 24 hours at most.
+- Admin: Settings -> **Clear all chats** deletes everything immediately.
+- Change it in `config.json`: `selfDestruct` (true/false), `secondsPerMessage`, `maxUnreadHours`.
+- Limits: this keeps the chat tidy but cannot stop screenshots or copy-paste. Anyone can type another person's username and read that person's unread messages, because there are no passwords.
+
 ## Settings
 
 At the top of `server.js`: `PORT` (default 3000) and `MAX_FILE_MB` (default 50).

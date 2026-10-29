@@ -1,4 +1,7 @@
 {
   "adminPassword": "change-me",
-  "localhostAdmin": true
+  "localhostAdmin": true,
+  "selfDestruct": true,
+  "secondsPerMessage": 30,
+  "maxUnreadHours": 24
 }
