@@ -21,7 +21,9 @@
   .msg { max-width: 75%; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
   .msg.mine { align-self: flex-end; background: var(--mine); }
   .meta { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
-  .msg img { max-width: min(100%, 80px); max-height: 80px; width: auto; height: auto; object-fit: contain; border-radius: 6px; display: block; margin-top: 4px; cursor: zoom-in; }
+  .imageFloatButton { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; padding: 5px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--accent); font: inherit; cursor: pointer; }
+  .imageFloatButton:hover { filter: brightness(.96); }
+  .imageFloatNumber { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; }
   #imageFloat { display: none; position: fixed; z-index: 30; top: 72px; left: 50%; transform: translateX(-50%); width: min(360px, 85vw); max-height: 75vh; overflow: hidden; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.3); }
   #imageFloat.open { display: block; }
   #imageFloatHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; background: var(--accent); color: #fff; cursor: grab; touch-action: none; user-select: none; }
@@ -101,6 +103,7 @@ const messages = $('messages');
 let ws;
 let isAdmin = false, canLogin = false, onlineUsers = [];
 const unseenIds = new Set(); // messages from others that are on screen but not yet reported as read
+let imagePreviewCount = 0;
 
 function fmtSize(b) { return b > 1048576 ? (b/1048576).toFixed(1)+' MB' : Math.max(1, Math.round(b/1024))+' KB'; }
 function fmtTime(t) { return new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
@@ -125,12 +128,18 @@ function addMessage(m) {
     a.textContent = '📄 ' + m.file.name + ' (' + fmtSize(m.file.size) + ')';
     div.appendChild(a);
     if (m.file.isImage) {
-      const img = document.createElement('img');
-      img.src = m.file.url;
-      img.alt = m.file.name || 'Gambar';
-      img.title = 'Klik untuk membuka pratinjau mengambang';
-      img.addEventListener('click', () => openImageFloat(m.file.url, m.file.name));
-      div.appendChild(img);
+      const imageButton = document.createElement('button');
+      imageButton.type = 'button';
+      imageButton.className = 'imageFloatButton';
+      imageButton.title = 'Klik untuk membuka pratinjau mengambang';
+      const count = document.createElement('span');
+      count.className = 'imageFloatNumber';
+      count.textContent = String(++imagePreviewCount);
+      const label = document.createElement('span');
+      label.textContent = 'Lihat gambar';
+      imageButton.append(count, label);
+      imageButton.addEventListener('click', () => openImageFloat(m.file.url, m.file.name));
+      div.appendChild(imageButton);
     }
   }
   const atBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 80;
@@ -173,7 +182,7 @@ function connect() {
 }
 connect();
 
-// Click a thumbnail to open a Clippy-style floating preview; drag its header to move it.
+// Click a numbered image button to open a Clippy-style floating preview.
 function openImageFloat(url, title) {
   const panel = $('imageFloat');
   $('imageFloatImage').src = url;

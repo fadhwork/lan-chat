@@ -29,7 +29,7 @@ Lightweight office chat with file sharing. One PC runs the server; everyone else
 
 ## Pratinjau dan ukuran gambar
 
-- Klik gambar mini untuk membukanya di jendela pratinjau mengambang; seret bilah judulnya untuk memindahkan jendela, lalu klik × atau tekan Esc untuk menutupnya.
+- Setiap gambar memiliki tombol **Lihat gambar** dengan nomor urut; klik untuk membuka gambar dalam pratinjau mengambang. Seret bilah judul untuk memindahkan jendela, lalu klik × atau tekan Esc untuk menutupnya.
 - Teks panjang dan tautan akan membungkus otomatis di dalam gelembung chat.
 
 ## Admin (mengubah nama pengguna lain)
