@@ -309,7 +309,7 @@ function openSettings() {
 }
 $('gear').onclick = openSettings;
 $('setClose').onclick = () => { $('settings').style.display = 'none'; };
-$('settings').addEventListener('click', (e) => { if (e.target === $('settings')) $('settings').style.display = 'none'; });
+$('settings').addEventListener('click', (e) => { if (e.target === $('settings')) e.stopPropagation(); });
 $('setTitle').oninput = (e) => { settings.title = e.target.value; saveSettings(); applySettings(); };
 $('setBg').oninput = (e) => { settings.bg = e.target.value; saveSettings(); applySettings(); };
 $('setFg').oninput = (e) => { settings.fg = e.target.value; saveSettings(); applySettings(); };
