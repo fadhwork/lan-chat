@@ -41,13 +41,13 @@ Lightweight office chat with file sharing. One PC runs the server; everyone else
 
 ## Pesan yang terhapus otomatis
 
-- Pesan hilang dari layar 15 detik setelah dibaca. Jika beberapa pesan tiba bersamaan, pesan dihapus bergiliran (15 detik, 30 detik, 45 detik, dan seterusnya).
-- Pesan dianggap sudah dibaca saat tab chat terbuka dan terlihat. Pesan yang Anda kirim akan hilang dari layar Anda dengan cara yang sama.
-- Pengguna dikenali berdasarkan nama pengguna. Pesan yang belum dilihat tetap tersedia saat chat dibuka; penghitung waktu dimulai saat itu.
-- Pesan dihapus dari server (beserta file yang diunggah) setelah semua penerima membacanya dan waktunya habis, atau paling lambat setelah 24 jam.
-- Admin: Pengaturan -> **Hapus semua chat** langsung menghapus semuanya.
+- Pesan dihapus otomatis dari layar setelah timer pembaca berakhir; pesan yang belum dibaca dihapus setelah batas `maxUnreadHours`.
+- Admin: Pengaturan -> **Hapus semua chat** menghapus pesan dan file bersama dari server.
 - Ubah di `config.json`: `selfDestruct` (true/false), `secondsPerMessage` (default 15 detik), `maxUnreadHours`.
-- Batasan: fitur ini tidak mencegah tangkapan layar atau salin-tempel. Siapa pun dapat menggunakan nama orang lain dan membaca pesan yang belum dibaca karena tidak ada kata sandi pengguna.
+
+## Tampilan ringkas mengambang
+
+- Klik **Ringkas** di bilah chat untuk membuka ruang chat mini yang mengambang di sudut kanan bawah. Mode ini memakai teks 6 piksel dan menyembunyikan daftar pengguna online. Pilihan tersimpan di browser; klik **Normal** untuk kembali.
 
 ## Pengaturan
 
