@@ -21,7 +21,8 @@
   .msg { max-width: 75%; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
   .msg.mine { align-self: flex-end; background: var(--mine); }
   .meta { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
-  .msg img { max-width: min(100%, 80px); max-height: 80px; width: auto; height: auto; object-fit: contain; border-radius: 6px; display: block; margin-top: 4px; resize: both; overflow: auto; }
+  .msg img { max-width: min(100%, 80px); max-height: 80px; width: auto; height: auto; object-fit: contain; border-radius: 6px; display: block; margin-top: 4px; resize: both; overflow: auto; cursor: grab; touch-action: none; user-select: none; -webkit-user-drag: none; }
+  .msg img.dragging { position: fixed; z-index: 20; margin: 0; cursor: grabbing; max-width: min(80vw, 80px); max-height: 80vh; }
   .msg a { color: var(--accent); }
   #note { display: none; text-align: center; font-size: 12px; color: var(--muted); padding: 6px; background: var(--panel); border-bottom: 1px solid var(--border); }
   #typing { height: 20px; padding: 0 16px; font-size: 12px; color: var(--muted); }
@@ -115,6 +116,8 @@ function addMessage(m) {
     if (m.file.isImage) {
       const img = document.createElement('img');
       img.src = m.file.url;
+      img.draggable = false;
+      img.addEventListener('pointerdown', startImageDrag);
       div.appendChild(img);
     }
   }
@@ -157,6 +160,39 @@ function connect() {
   ws.onclose = () => setTimeout(connect, 2000); // auto-reconnect
 }
 connect();
+
+// Drag image previews freely over the chat; release returns them to their bubble.
+function startImageDrag(e) {
+  if (e.button !== 0) return;
+  const img = e.currentTarget;
+  const rect = img.getBoundingClientRect();
+  const offsetX = e.clientX - rect.left;
+  const offsetY = e.clientY - rect.top;
+  img.classList.add('dragging');
+  img.style.left = rect.left + 'px';
+  img.style.top = rect.top + 'px';
+  img.style.width = rect.width + 'px';
+  img.style.height = rect.height + 'px';
+  img.setPointerCapture(e.pointerId);
+  const move = (event) => {
+    img.style.left = (event.clientX - offsetX) + 'px';
+    img.style.top = (event.clientY - offsetY) + 'px';
+  };
+  const finish = () => {
+    img.classList.remove('dragging');
+    img.style.removeProperty('left');
+    img.style.removeProperty('top');
+    img.style.removeProperty('width');
+    img.style.removeProperty('height');
+    img.removeEventListener('pointermove', move);
+    img.removeEventListener('pointerup', finish);
+    img.removeEventListener('pointercancel', finish);
+  };
+  img.addEventListener('pointermove', move);
+  img.addEventListener('pointerup', finish);
+  img.addEventListener('pointercancel', finish);
+  e.preventDefault();
+}
 // ---- Self-destruct: report what was read, remove what the server says has vanished ----
 function showNote(m) {
   const n = $('note');

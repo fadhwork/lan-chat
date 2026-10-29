@@ -29,7 +29,7 @@ Lightweight office chat with file sharing. One PC runs the server; everyone else
 
 ## Pratinjau dan ukuran gambar
 
-- Gambar ditampilkan kecil (maksimum 80 × 80 piksel) dan dapat diubah ukurannya dengan menyeret sudut kanan bawah.
+- Gambar ditampilkan kecil (maksimum 80 × 80 piksel), dapat diubah ukurannya dengan menyeret sudut kanan bawah, dan bisa diseret sementara ke posisi lain di chat.
 - Teks panjang dan tautan akan membungkus otomatis di dalam gelembung chat.
 
 ## Admin (mengubah nama pengguna lain)
