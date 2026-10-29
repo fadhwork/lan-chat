@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Office Chat</title>
+<title>New Tab</title>
 <style>
   :root { --bg:#f4f5f7; --panel:#fff; --text:#1d1f23; --muted:#7a8088; --accent:#2f6fed; --mine:#dce8ff; --border:#e2e5ea; }
   @media (prefers-color-scheme: dark) {
@@ -177,7 +177,7 @@ function removeMessages(ids) {
 }
 
 // ---- Settings (saved per browser) ----
-const DEFAULTS = { title: 'Office Chat', bg: '', fg: '', size: 16 };
+const DEFAULTS = { title: 'New Tab', bg: '', fg: '', size: 16 };
 let settings = { ...DEFAULTS };
 try { settings = { ...DEFAULTS, ...JSON.parse(localStorage.getItem('chatSettings') || '{}') }; } catch {}
 function saveSettings() { try { localStorage.setItem('chatSettings', JSON.stringify(settings)); } catch {} }
