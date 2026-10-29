@@ -18,13 +18,13 @@ fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 // Optional config.json next to the app/exe. All keys are optional:
 // { "adminPassword": "secret", "localhostAdmin": true,
-//   "selfDestruct": true, "secondsPerMessage": 30, "maxUnreadHours": 24 }
+//   "selfDestruct": true, "secondsPerMessage": 15, "maxUnreadHours": 24 }
 let config = {};
 try { config = JSON.parse(fs.readFileSync(path.join(BASE_DIR, 'config.json'), 'utf8')); } catch {}
 const ADMIN_PASSWORD = String(config.adminPassword || '');
 const LOCAL_ADMIN = config.localhostAdmin !== false;            // the PC running the server is admin by default
 const SELF_DESTRUCT = config.selfDestruct !== false;            // messages vanish after being read
-const SECONDS_PER_MESSAGE = Number(config.secondsPerMessage) > 0 ? Number(config.secondsPerMessage) : 30;
+const SECONDS_PER_MESSAGE = Number(config.secondsPerMessage) > 0 ? Number(config.secondsPerMessage) : 15;
 const MAX_UNREAD_MS = (Number(config.maxUnreadHours) > 0 ? Number(config.maxUnreadHours) : 24) * 3600 * 1000;
 const sha = (x) => crypto.createHash('sha256').update(String(x)).digest();
 

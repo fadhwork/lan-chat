@@ -27,31 +27,35 @@ Lightweight office chat with file sharing. One PC runs the server; everyone else
 - `history.jsonl` - chat history (delete it to clear history)
 - `uploads/` - shared files (clean it up now and then)
 
-## Admin (rename other users)
+## Pratinjau dan ukuran gambar
 
-- Whoever runs the app is admin automatically: any browser on the PC that runs the server (via `localhost` or that PC's own IP link) gets the admin tools.
-- To be admin from another PC, create `config.json` next to `server.js` / `lan-chat.exe`
-  (copy `config.example.json`) and set `adminPassword`. Then in the chat open Settings (gear) and click **Admin login**.
-- Set `"localhostAdmin": false` to require the password everywhere.
-- Admins see a list of online users in Settings and can rename anyone. Old messages keep the old name.
+- Gambar ditampilkan kecil (maksimum 80 × 80 piksel) dan dapat diubah ukurannya dengan menyeret sudut kanan bawah.
+- Teks panjang dan tautan akan membungkus otomatis di dalam gelembung chat.
 
-## Self-destructing messages
+## Admin (mengubah nama pengguna lain)
 
-- A message vanishes from your screen 30 seconds after you read it. If several arrive at once, they vanish one after another (30 s, 60 s, 90 s...).
-- "Read" means the chat tab is open and visible. Messages you write vanish from your own screen the same way.
-- A person is identified by their username. Someone who hasn't opened the chat yet still sees the message when they do, and their timer starts then.
-- A message is deleted from the server (with its uploaded file) when everyone it was meant for has read it and their timers ended, or after 24 hours at most.
-- Admin: Settings -> **Clear all chats** deletes everything immediately.
-- Change it in `config.json`: `selfDestruct` (true/false), `secondsPerMessage`, `maxUnreadHours`.
-- Limits: this keeps the chat tidy but cannot stop screenshots or copy-paste. Anyone can type another person's username and read that person's unread messages, because there are no passwords.
+- Pengguna komputer yang menjalankan aplikasi otomatis menjadi admin: browser di komputer server (melalui `localhost` atau alamat IP komputer tersebut) mendapatkan fitur admin.
+- Untuk menjadi admin dari komputer lain, buat `config.json` di samping `server.js` / `lan-chat.exe` (salin `config.example.json`) dan atur `adminPassword`. Di chat buka Pengaturan (ikon roda gigi), lalu pilih **Masuk sebagai admin**.
+- Atur `"localhostAdmin": false` untuk mewajibkan kata sandi di semua komputer.
+- Admin dapat melihat daftar pengguna online di Pengaturan dan mengubah nama siapa pun. Pesan lama tetap menggunakan nama sebelumnya.
 
-## Settings
+## Pesan yang terhapus otomatis
 
-At the top of `server.js`: `PORT` (default 3000) and `MAX_FILE_MB` (default 50).
+- Pesan hilang dari layar 15 detik setelah dibaca. Jika beberapa pesan tiba bersamaan, pesan dihapus bergiliran (15 detik, 30 detik, 45 detik, dan seterusnya).
+- Pesan dianggap sudah dibaca saat tab chat terbuka dan terlihat. Pesan yang Anda kirim akan hilang dari layar Anda dengan cara yang sama.
+- Pengguna dikenali berdasarkan nama pengguna. Pesan yang belum dilihat tetap tersedia saat chat dibuka; penghitung waktu dimulai saat itu.
+- Pesan dihapus dari server (beserta file yang diunggah) setelah semua penerima membacanya dan waktunya habis, atau paling lambat setelah 24 jam.
+- Admin: Pengaturan -> **Hapus semua chat** langsung menghapus semuanya.
+- Ubah di `config.json`: `selfDestruct` (true/false), `secondsPerMessage` (default 15 detik), `maxUnreadHours`.
+- Batasan: fitur ini tidak mencegah tangkapan layar atau salin-tempel. Siapa pun dapat menggunakan nama orang lain dan membaca pesan yang belum dibaca karena tidak ada kata sandi pengguna.
 
-## Notes
+## Pengaturan
 
-- No login: anyone on the LAN can use any name. Fine for a trusted office.
-- Give the server PC a fixed IP so the link doesn't change.
+Di bagian atas `server.js`: `PORT` (default 3000) dan `MAX_FILE_MB` (default 50).
+
+## Catatan
+
+- Tidak ada login: siapa pun di jaringan lokal dapat menggunakan nama apa saja. Gunakan hanya di kantor tepercaya.
+- Gunakan alamat IP tetap untuk komputer server agar tautannya tidak berubah.
 
 (c) 2026 fadhlihsani
