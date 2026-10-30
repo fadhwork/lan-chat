@@ -32,3 +32,8 @@ test('element lookups also work while the chat lives in the floating window', ()
   assert.match(script, /pipOpen\(\) \? pipWindow\.document\.getElementById\(id\)/);
   assert.match(html, /id="pipNote"/);
 });
+
+test('font size can go down to 6px and the floating window follows it', () => {
+  assert.match(html, /id="setSize" min="6" max="24"/);
+  assert.match(script, /doc\.body\.style\.fontSize = settings\.size \+ 'px'/);
+});

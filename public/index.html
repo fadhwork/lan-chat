@@ -25,7 +25,7 @@
   body.pip-mode #messages { min-height: 0; }
   #pipNote { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; color: var(--muted); }
   body.pip-mode #pipNote { display: flex; }
-  .meta { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .meta { font-size: .75em; color: var(--muted); margin-bottom: 2px; }
   .msg img { max-width: min(100%, 80px); max-height: 80px; width: auto; height: auto; object-fit: contain; border-radius: 6px; display: block; margin-top: 4px; cursor: zoom-in; }
   #imageFloat { display: none; position: fixed; z-index: 30; top: 72px; left: 50%; transform: translateX(-50%); width: min(360px, 85vw); max-height: 75vh; overflow: hidden; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.3); }
   #imageFloat.open { display: block; }
@@ -36,8 +36,8 @@
   #imageFloatBody { padding: 8px; overflow: auto; max-height: calc(75vh - 42px); text-align: center; }
   #imageFloatBody img { display: block; max-width: 100%; max-height: calc(75vh - 60px); width: auto; height: auto; margin: 0 auto; object-fit: contain; }
   .msg a { color: var(--accent); }
-  #note { display: none; text-align: center; font-size: 12px; color: var(--muted); padding: 6px; background: var(--panel); border-bottom: 1px solid var(--border); }
-  #typing { height: 20px; padding: 0 16px; font-size: 12px; color: var(--muted); }
+  #note { display: none; text-align: center; font-size: .75em; color: var(--muted); padding: 6px; background: var(--panel); border-bottom: 1px solid var(--border); }
+  #typing { height: 1.67em; padding: 0 16px; font-size: .75em; color: var(--muted); }
   #bar { display: flex; gap: 8px; padding: 10px; background: var(--panel); border-top: 1px solid var(--border); }
   #text { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
   button { padding: 0 14px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font: inherit; cursor: pointer; }
@@ -91,7 +91,7 @@
     <label>Nama pengguna <input type="text" id="setName" maxlength="30"></label>
     <label>Warna latar <input type="color" id="setBg"></label>
     <label>Warna teks <input type="color" id="setFg"></label>
-    <label>Ukuran huruf <span><input type="range" id="setSize" min="12" max="24" step="1"> <span id="sizeVal"></span></span></label>
+    <label>Ukuran huruf <span><input type="range" id="setSize" min="6" max="24" step="1"> <span id="sizeVal"></span></span></label>
     <div id="adminBox"></div>
     <div class="row">
       <button class="secondary" id="setReset">Atur ulang</button>
@@ -234,12 +234,13 @@ function moveChatInto(win) {
   const base = doc.createElement('base'); base.href = location.href; doc.head.appendChild(base);
   document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => doc.head.appendChild(node.cloneNode(true)));
   const fit = doc.createElement('style');
-  fit.textContent = 'html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font:13px system-ui,sans-serif}body{display:block}'
+  fit.textContent = 'html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif}body{display:block}'
     + '#side,#imageFloat,#settings,#drop,#pipNote,#gear{display:none!important}'
     + '#main{position:static!important;width:100%!important;height:100%!important;border:0!important;border-radius:0!important;box-shadow:none!important}'
-    + '#messages{min-height:0;padding:8px;gap:6px}.msg{max-width:92%;padding:6px 10px}.meta{font-size:11px}#typing{height:16px;padding:0 10px;font-size:11px}#note{font-size:11px;padding:4px}'
-    + '#bar{gap:6px;padding:6px}#text{padding:7px 9px}#bar button{padding:6px 10px}#bar button.ghost{font-size:16px;padding:4px 8px}';
+    + '#messages{min-height:0;padding:.6em;gap:.45em}.msg{max-width:92%;padding:.45em .75em}#typing{padding:0 .8em}#note{padding:.3em}'
+    + '#bar{gap:.45em;padding:.45em}#text{padding:.5em .7em}#bar button{padding:.45em .75em}#bar button.ghost{font-size:1.2em;padding:.25em .5em}';
   doc.head.appendChild(fit);
+  doc.body.style.fontSize = settings.size + 'px'; // the floating window follows the font-size setting
   const placeholder = document.createComment('Pojok return point');
   main.parentNode.insertBefore(placeholder, main);
   doc.body.appendChild(main);
