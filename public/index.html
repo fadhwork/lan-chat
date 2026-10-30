@@ -20,35 +20,11 @@
   #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
   .msg { max-width: 75%; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
   .msg.mine { align-self: flex-end; background: var(--mine); }
-  body.compact { font-size: 6px; }
-  body.compact #side { display: none; }
-  body.compact #main { position: fixed; z-index: 2147483000; right: 12px; bottom: 12px; width: min(340px, calc(100vw - 24px)); height: min(420px, calc(100vh - 24px)); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.28); overflow: hidden; }
-  body.compact #messages { padding: 4px; gap: 2px; }
-  body.compact .msg { max-width: 92%; border-radius: 5px; padding: 2px 4px; }
-  body.compact .meta { font-size: 6px; margin-bottom: 1px; }
-  body.compact #typing { height: 9px; padding: 0 5px; font-size: 6px; }
-  body.compact #bar { gap: 3px; padding: 3px; }
-  body.compact #text { padding: 3px 5px; font-size: 6px; }
-  body.compact #bar button { padding: 2px 5px; font-size: 6px; border-radius: 4px; }
-  body.compact #bar button.ghost { font-size: 10px; }
-  body.compact #note { padding: 2px; font-size: 6px; }
-  body.compact #imageFloat { font-size: 12px; }
-  body.compact #typing { line-height: 9px; }
-  body.compact #messages .imageFloatButton { padding: 2px 4px; font-size: 6px; }
-  body.compact #messages .imageFloatNumber { min-width: 14px; height: 14px; font-size: 6px; }
-  body.compact #bar #compactToggle { font-size: 6px; padding: 3px 5px; }
-  body.compact #bar #compactPip { font-size: 6px; padding: 3px 5px; }
   body.pip-mode #side, body.pip-mode #imageFloat, body.pip-mode #settings, body.pip-mode #drop { display: none !important; }
   body.pip-mode #main { position: static !important; z-index: auto !important; width: 100% !important; height: 100% !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
   body.pip-mode #messages { min-height: 0; }
-  #compactHandle { display: none; flex: none; position: relative; height: 10px; cursor: grab; touch-action: none; background: var(--panel); border-bottom: 1px solid var(--border); }
-  #compactHandle::after { content: ""; position: absolute; left: 50%; top: 3px; width: 28px; height: 3px; margin-left: -14px; border-radius: 2px; background: var(--muted); opacity: .6; }
-  #compactHandle:active { cursor: grabbing; }
-  body.compact #compactHandle { display: block; }
-  body.pip-mode #compactHandle { display: none !important; }
   #pipNote { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; color: var(--muted); }
   body.pip-mode #pipNote { display: flex; }
-  body.compact #bar #compactClear { display: inline-block !important; font-size: 6px; padding: 3px 5px; }
   .meta { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
   .msg img { max-width: min(100%, 80px); max-height: 80px; width: auto; height: auto; object-fit: contain; border-radius: 6px; display: block; margin-top: 4px; cursor: zoom-in; }
   #imageFloat { display: none; position: fixed; z-index: 30; top: 72px; left: 50%; transform: translateX(-50%); width: min(360px, 85vw); max-height: 75vh; overflow: hidden; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.3); }
@@ -68,10 +44,6 @@
   button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); font-size: 18px; }
   button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); padding: 8px 14px; }
   #bar #compactClear { display: none; }
-  #bar #compactPip { display: inline-block; }
-  body.pip-mode #bar #compactToggle { display: none; }
-  body.pip-mode #bar #compactPip { display: inline-block !important; font-size: 6px; padding: 3px 5px; }
-  body.pip-mode #bar #compactPip { display: inline-block !important; font-size: 6px; padding: 3px 5px; }
   #drop { display: none; position: fixed; inset: 0; background: rgba(47,111,237,.15); border: 3px dashed var(--accent); align-items: center; justify-content: center; font-size: 22px; z-index: 9; }
   #settings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 10; }
   #settings .card { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 18px; width: min(360px, 92vw); display: flex; flex-direction: column; gap: 12px; }
@@ -92,7 +64,6 @@
 <body>
 <div id="side"><h3>Sedang online</h3><div id="users"></div></div>
 <div id="main">
-  <div id="compactHandle" title="Seret untuk memindahkan"></div>
   <div id="note"></div>
   <div id="messages"></div>
   <div id="typing"></div>
@@ -100,8 +71,7 @@
     <button class="ghost" id="attach" title="Kirim file">📎</button>
     <button class="ghost" id="sound" title="Suara aktif/nonaktif">🔊</button>
     <button class="ghost" id="gear" title="Pengaturan">⚙️</button>
-    <button id="compactToggle" type="button" aria-pressed="false" title="Tampilan pojok">Pojok</button>
-    <button id="compactPip" type="button" class="secondary" title="Buka chat di jendela Picture-in-Picture">PiP</button>
+    <button id="compactToggle" type="button" aria-pressed="false" title="Buka chat di jendela mengambang">Pojok</button>
     <button id="compactClear" type="button" class="secondary" style="display:none" title="Hapus semua chat">Hapus chat</button>
     <input type="file" id="fileInput" hidden>
     <input id="text" placeholder="Tulis pesan..." autocomplete="off">
@@ -147,8 +117,6 @@ let ws;
 let isAdmin = false, canLogin = false, onlineUsers = [];
 const unseenIds = new Set(); // messages from others that are on screen but not yet reported as read
 let imagePreviewCount = 0;
-let compactMode = localStorage.getItem('chatCompactMode') === 'on';
-if (pipSupported()) compactMode = false; // Pojok opens the floating PiP window instead of the in-tab panel
 
 function fmtSize(b) { return b > 1048576 ? (b/1048576).toFixed(1)+' MB' : Math.max(1, Math.round(b/1024))+' KB'; }
 function fmtTime(t) { return new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
@@ -198,7 +166,7 @@ function connect() {
       if (m.user !== name) notify();
       flushSeen();
     }
-    else if (m.type === 'role') { isAdmin = m.admin; canLogin = m.canLogin; showNote(m); refreshAdmin(); syncCompactAdminButton(); }
+    else if (m.type === 'role') { isAdmin = m.admin; canLogin = m.canLogin; showNote(m); refreshAdmin(); syncPojokButton(); }
     else if (m.type === 'remove') removeMessages(m.ids);
     else if (m.type === 'cleared') { messages.innerHTML = ''; unseenIds.clear(); }
     else if (m.type === 'renamed') {
@@ -221,107 +189,81 @@ function connect() {
 }
 connect();
 
-function applyCompactMode() {
-  document.body.classList.toggle('compact', compactMode);
+// ---- Pojok: the chat in a floating window outside the tab ----
+// Chrome/Edge with Document Picture-in-Picture (https or localhost): a real always-on-top PiP window.
+// Every other browser (Firefox, Safari, plain http://192.168...): a small separate pop-up window.
+function syncPojokButton() {
+  const open = pipOpen();
   const button = $('compactToggle');
-  button.setAttribute('aria-pressed', String(compactMode));
-  button.textContent = compactMode ? 'Normal' : 'Pojok';
-  button.title = compactMode ? 'Kembali ke tampilan normal' : pipSupported() ? 'Buka chat di jendela mengambang (Picture-in-Picture)' : 'Tampilan pojok di browser';
-  syncCompactAdminButton();
-}
-function syncCompactAdminButton() {
-  $('compactClear').style.display = compactMode && isAdmin ? 'inline-block' : 'none';
+  button.setAttribute('aria-pressed', String(open));
+  button.textContent = open ? 'Tutup' : 'Pojok';
+  button.title = open ? 'Tutup jendela mengambang' : 'Buka chat di jendela mengambang';
+  $('compactClear').style.display = open && isAdmin ? 'inline-block' : 'none';
 }
 $('compactClear').addEventListener('click', () => {
   if (isAdmin && confirm('Hapus SEMUA pesan dan file yang diunggah untuk semua orang?') && ws.readyState === 1) {
     ws.send(JSON.stringify({ type: 'clearAll' }));
   }
 });
-$('compactPip').addEventListener('click', openCompactPiP);
-$('compactToggle').addEventListener('click', () => {
-  if (pipOpen()) { pipWindow.close(); return; }
-  if (!compactMode && pipSupported()) { openCompactPiP(); return; } // floating window outside the tab
-  compactMode = !compactMode;                                       // fallback: floating panel inside the tab
-  localStorage.setItem('chatCompactMode', compactMode ? 'on' : 'off');
-  applyCompactMode();
-});
+$('compactToggle').addEventListener('click', () => { if (pipOpen()) pipWindow.close(); else openChatWindow(); });
 $('pipReturn').addEventListener('click', () => { if (pipOpen()) pipWindow.close(); });
-function floatInTab() {
-  compactMode = true;
-  localStorage.setItem('chatCompactMode', 'on');
-  applyCompactMode();
-}
-async function openCompactPiP() {
+
+async function openChatWindow() {
   if (pipOpen()) { pipWindow.focus(); return; }
-  if (!pipSupported()) { floatInTab(); return; }
-  try {
-    const pip = await window.documentPictureInPicture.requestWindow({ width: 360, height: 460 });
-    pipWindow = pip;
-    pip.document.documentElement.lang = 'id';
-    pip.document.documentElement.style.cssText = document.documentElement.style.cssText; // custom colors
-    const base = document.createElement('base'); base.href = location.href; pip.document.head.appendChild(base);
-    document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => pip.document.head.appendChild(node.cloneNode(true)));
-    const pipStyle = document.createElement('style');
-    pipStyle.textContent = 'html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font:6px system-ui,sans-serif}body{display:block}#side,#imageFloat,#settings,#drop,#compactHandle,#pipNote{display:none!important}#main{position:static!important;z-index:auto!important;width:100%!important;height:100%!important;border:0!important;border-radius:0!important;box-shadow:none!important}#messages{min-height:0}';
-    pip.document.head.appendChild(pipStyle);
-    const closeBtn = $('compactPip');
-    closeBtn.textContent = 'Tutup';
-    closeBtn.title = 'Tutup jendela Picture-in-Picture';
-    closeBtn.onclick = () => { if (pipOpen()) pipWindow.close(); };
-    const placeholder = document.createComment('Pojok PiP return point');
-    const home = main.parentNode; home.insertBefore(placeholder, main);
-    pip.document.body.appendChild(main);
-    document.body.classList.add('pip-mode');
-    compactMode = false; applyCompactMode();
-    messages.scrollTop = messages.scrollHeight;
-    pip.addEventListener('pagehide', () => {
-      if (placeholder.parentNode) placeholder.parentNode.replaceChild(main, placeholder);
-      document.body.classList.remove('pip-mode'); pipWindow = null;
-      applyCompactMode(); messages.scrollTop = messages.scrollHeight;
-    }, { once: true });
-    flushSeen(); // the floating window counts as "reading"
-  } catch (error) {
-    pipWindow = null;
-    console.warn('Picture-in-Picture gagal, memakai panel pojok di dalam tab:', error);
-    floatInTab();
+  let win = null;
+  if (pipSupported()) {
+    try { win = await window.documentPictureInPicture.requestWindow({ width: 360, height: 460 }); }
+    catch (error) { console.warn('Picture-in-Picture gagal, memakai jendela pop-up:', error); }
   }
+  if (!win) {
+    win = window.open('', 'chatPojok', 'popup=yes,width=360,height=460,left=' + Math.max(0, screen.availWidth - 380) + ',top=' + Math.max(0, screen.availHeight - 500));
+    if (!win) { alert('Jendela Pojok diblokir browser. Izinkan pop-up untuk situs ini, lalu klik Pojok lagi.'); return; }
+    win.document.open();
+    win.document.write('<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>');
+    win.document.close();
+  }
+  moveChatInto(win);
 }
 
-// In-tab fallback: drag the panel by its handle; it snaps to the nearest corner and remembers it.
-function placeCompact(corner) { // 'tl' | 'tr' | 'bl' | 'br'
-  const top = corner[0] === 't', left = corner[1] === 'l', st = main.style;
-  st.top = top ? '12px' : 'auto'; st.bottom = top ? 'auto' : '12px';
-  st.left = left ? '12px' : 'auto'; st.right = left ? 'auto' : '12px';
-}
-placeCompact(localStorage.getItem('chatCompactCorner') || 'br');
-(() => {
-  const handle = $('compactHandle');
-  let drag = null;
-  handle.addEventListener('pointerdown', (e) => {
-    const r = main.getBoundingClientRect();
-    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
-    main.style.left = r.left + 'px'; main.style.top = r.top + 'px';
-    main.style.right = 'auto'; main.style.bottom = 'auto';
-    if (handle.setPointerCapture) handle.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  });
-  handle.addEventListener('pointermove', (e) => {
-    if (!drag) return;
-    const maxL = Math.max(0, window.innerWidth - main.offsetWidth), maxT = Math.max(0, window.innerHeight - main.offsetHeight);
-    main.style.left = Math.min(Math.max(0, e.clientX - drag.dx), maxL) + 'px';
-    main.style.top = Math.min(Math.max(0, e.clientY - drag.dy), maxT) + 'px';
-  });
-  const stop = (e) => {
-    if (!drag) return;
-    drag = null;
-    const corner = (e.clientY < window.innerHeight / 2 ? 't' : 'b') + (e.clientX < window.innerWidth / 2 ? 'l' : 'r');
-    localStorage.setItem('chatCompactCorner', corner);
-    placeCompact(corner);
+function moveChatInto(win) {
+  pipWindow = win;
+  const doc = win.document;
+  doc.documentElement.lang = 'id';
+  doc.documentElement.style.cssText = document.documentElement.style.cssText; // custom colors
+  doc.title = settings.title || 'Chat';
+  const base = doc.createElement('base'); base.href = location.href; doc.head.appendChild(base);
+  document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => doc.head.appendChild(node.cloneNode(true)));
+  const fit = doc.createElement('style');
+  fit.textContent = 'html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font:13px system-ui,sans-serif}body{display:block}'
+    + '#side,#imageFloat,#settings,#drop,#pipNote,#gear{display:none!important}'
+    + '#main{position:static!important;width:100%!important;height:100%!important;border:0!important;border-radius:0!important;box-shadow:none!important}'
+    + '#messages{min-height:0;padding:8px;gap:6px}.msg{max-width:92%;padding:6px 10px}.meta{font-size:11px}#typing{height:16px;padding:0 10px;font-size:11px}#note{font-size:11px;padding:4px}'
+    + '#bar{gap:6px;padding:6px}#text{padding:7px 9px}#bar button{padding:6px 10px}#bar button.ghost{font-size:16px;padding:4px 8px}';
+  doc.head.appendChild(fit);
+  const placeholder = document.createComment('Pojok return point');
+  main.parentNode.insertBefore(placeholder, main);
+  doc.body.appendChild(main);
+  document.body.classList.add('pip-mode');
+  syncPojokButton();
+  messages.scrollTop = messages.scrollHeight;
+
+  let restored = false, poll = null;
+  const restore = () => {
+    if (restored) return;
+    restored = true; clearInterval(poll);
+    if (placeholder.parentNode) placeholder.parentNode.replaceChild(main, placeholder);
+    document.body.classList.remove('pip-mode');
+    pipWindow = null;
+    syncPojokButton();
+    messages.scrollTop = messages.scrollHeight;
   };
-  handle.addEventListener('pointerup', stop);
-  handle.addEventListener('pointercancel', stop);
-})();
-applyCompactMode();
+  win.addEventListener('pagehide', restore, { once: true });
+  poll = setInterval(() => { if (win.closed) restore(); }, 500);                 // pop-ups: catch a closed window
+  window.addEventListener('pagehide', () => { try { win.close(); } catch {} }, { once: true }); // tab reloaded/closed
+  win.focus();
+  flushSeen(); // the floating window counts as "reading"
+}
+syncPojokButton();
 
 // Click a thumbnail to open a Clippy-style floating preview; drag its header to move it.
 function openImageFloat(url, title) {

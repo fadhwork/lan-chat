@@ -4,39 +4,31 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const html = fs.readFileSync('public/index.html', 'utf8');
-const css = html.match(/<style>([\s\S]*?)<\/style>/)[1];
-const style = css.match(/body\.compact #main \{([^}]*)\}/)[1];
+const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
-test('compact chat is a fixed, viewport-overlay panel above page content', () => {
-  assert.match(style, /position:\s*fixed/);
-  assert.match(style, /z-index:\s*(\d+)/);
-  assert.ok(Number(style.match(/z-index:\s*(\d+)/)[1]) > 1000);
-});
-
-test('PIP opens a supported PiP window with live main UI and restore handler', () => {
-  const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+test('page script parses', () => {
   assert.doesNotThrow(() => new vm.Script(script));
-  assert.match(html, /id="compactPip"/);
-  assert.match(html, /documentPictureInPicture\.requestWindow/);
-  assert.match(html, /pip\.document\.body\.appendChild\(main\)/);
-  assert.match(html, /pip\.document\.getElementById\('compactPip'\)/);
-  assert.match(html, /pip\.addEventListener\('pagehide'/);
 });
 
-test('compact mode exposes native PiP and restores the page DOM on close', () => {
-  assert.match(html, /id="compactPip"/);
-  assert.match(html, /documentPictureInPicture\.requestWindow/);
-  assert.match(html, /pip\.addEventListener\('pagehide'/);
-  assert.match(html, /placeholder\.parentNode\.replaceChild\(main, placeholder\)/);
+test('Pojok is the only floating-chat trigger; no in-tab compact panel remains', () => {
+  assert.match(html, /id="compactToggle"/);
+  assert.doesNotMatch(html, /body\.compact/);
+  assert.doesNotMatch(html, /compactHandle|floatInTab|applyCompactMode|chatCompactMode|id="compactPip"/);
+  assert.match(script, /compactToggle'\)\.addEventListener\('click', \(\) => \{ if \(pipOpen\(\)\) pipWindow\.close\(\); else openChatWindow\(\); \}\);/);
 });
 
-test('Pojok opens the PiP window when supported and falls back to a draggable in-tab panel', () => {
-  assert.match(html, /!compactMode && pipSupported\(\)\) \{ openCompactPiP\(\)/);
-  assert.match(html, /function floatInTab\(\)/);
-  assert.match(html, /id="compactHandle"/);
+test('Pojok uses Document PiP when available and a pop-up window otherwise', () => {
+  assert.match(script, /documentPictureInPicture\.requestWindow/);
+  assert.match(script, /window\.open\('', 'chatPojok'/);
 });
 
-test('element lookups also work while the chat lives in the PiP window', () => {
-  assert.match(html, /pipOpen\(\) \? pipWindow\.document\.getElementById\(id\)/);
+test('the chat panel moves into the floating window and is restored when it closes', () => {
+  assert.match(script, /doc\.body\.appendChild\(main\)/);
+  assert.match(script, /win\.addEventListener\('pagehide', restore/);
+  assert.match(script, /placeholder\.parentNode\.replaceChild\(main, placeholder\)/);
+});
+
+test('element lookups also work while the chat lives in the floating window', () => {
+  assert.match(script, /pipOpen\(\) \? pipWindow\.document\.getElementById\(id\)/);
   assert.match(html, /id="pipNote"/);
 });
