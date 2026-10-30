@@ -67,8 +67,10 @@
   button { padding: 0 14px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font: inherit; cursor: pointer; }
   button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); font-size: 18px; }
   button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); padding: 8px 14px; }
-  #bar #compactClear, #bar #compactPip { display: none; }
+  #bar #compactClear { display: none; }
+  #bar #compactPip { display: inline-block; }
   body.pip-mode #bar #compactToggle { display: none; }
+  body.pip-mode #bar #compactPip { display: inline-block !important; font-size: 6px; padding: 3px 5px; }
   body.pip-mode #bar #compactPip { display: inline-block !important; font-size: 6px; padding: 3px 5px; }
   #drop { display: none; position: fixed; inset: 0; background: rgba(47,111,237,.15); border: 3px dashed var(--accent); align-items: center; justify-content: center; font-size: 22px; z-index: 9; }
   #settings { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 10; }
@@ -99,7 +101,7 @@
     <button class="ghost" id="sound" title="Suara aktif/nonaktif">🔊</button>
     <button class="ghost" id="gear" title="Pengaturan">⚙️</button>
     <button id="compactToggle" type="button" aria-pressed="false" title="Tampilan pojok">Pojok</button>
-    <button id="compactPip" type="button" title="Buka chat di jendela Picture-in-Picture">PiP</button>
+    <button id="compactPip" type="button" class="secondary" title="Buka chat di jendela Picture-in-Picture">PiP</button>
     <button id="compactClear" type="button" class="secondary" style="display:none" title="Hapus semua chat">Hapus chat</button>
     <input type="file" id="fileInput" hidden>
     <input id="text" placeholder="Tulis pesan..." autocomplete="off">
