@@ -43,11 +43,12 @@ Lightweight office chat with file sharing. One PC runs the server; everyone else
 
 - Pesan dihapus otomatis dari layar setelah timer pembaca berakhir; pesan yang belum dibaca dihapus setelah batas `maxUnreadHours`.
 - Admin: Pengaturan -> **Hapus semua chat** menghapus pesan dan file bersama dari server.
-- Ubah di `config.json`: `selfDestruct` (true/false), `secondsPerMessage` (default 15 detik), `maxUnreadHours`.
+- Admin dapat mengubah durasi hilang pesan di Pengaturan (⚙️) → **Pesan hilang setelah dibaca (detik)** → Simpan. Berlaku untuk semua orang dan diingat server; pesan yang sudah dijadwalkan hilang tetap memakai durasi lama.
+- Nilai awal dan opsi lain ada di `config.json`: `selfDestruct` (true/false), `secondsPerMessage` (nilai awal, default 15 detik), `maxUnreadHours`.
 
 ## Tombol Pojok (jendela mengambang)
 
-- Tombol **Pojok** memindahkan chat ke jendela kecil di luar tab, sehingga chat tetap terlihat tanpa membuka tab. Klik **Tutup** di jendela itu (atau **Kembalikan chat ke sini** di tab) untuk mengembalikan chat ke halaman. Pesan yang tampil di jendela ini dianggap sudah dibaca, dan suara pesan baru tetap berbunyi saat tab tidak aktif.
+- Tombol **Pojok** memindahkan chat ke jendela kecil di luar tab, sehingga chat tetap terlihat tanpa membuka tab. Tutup jendela itu dengan tombol tutupnya sendiri (atau klik **Kembalikan chat ke sini** di tab) untuk mengembalikan chat ke halaman. Pesan yang tampil di jendela ini dianggap sudah dibaca, dan suara pesan baru tetap berbunyi saat tab tidak aktif (suara dapat dimatikan di Pengaturan → Suara notifikasi). Admin melihat tombol 🗑️ di jendela ini untuk menghapus semua chat.
 - **Chrome/Edge (HTTPS atau `localhost`)**: Picture-in-Picture asli, jendela selalu berada di atas aplikasi lain.
 - **Browser lain, atau alamat `http://` biasa seperti `http://192.168.1.20:3000`** (Chrome/Edge menyembunyikan PiP di sini): chat dibuka di jendela pop-up kecil. Jendela ini terpisah dari tab tetapi tidak selalu di atas; jika browser memblokir pop-up, izinkan pop-up untuk situs ini.
 - Agar PiP asli (selalu di atas) berfungsi lewat alamat IP kantor di Chrome/Edge: buka `chrome://flags/#unsafely-treat-insecure-origin-as-secure` (Edge: `edge://flags/#unsafely-treat-insecure-origin-as-secure`), tambahkan alamat server (mis. `http://192.168.1.20:3000`), pilih Enabled, lalu mulai ulang browser. Pengaturan ini berlaku per komputer.

@@ -51,6 +51,7 @@
   #settings h3 { margin: 0; }
   #adminBox h4 { margin: 4px 0 8px; }
   #adminBox .arow { display: flex; gap: 6px; margin-bottom: 6px; }
+  #settings input[type=number] { width: 70px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
   #settings .arow input[type=text] { flex: 1; width: auto; min-width: 0; }
   #settings label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; }
   #settings input[type=text] { width: 190px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
@@ -69,10 +70,9 @@
   <div id="typing"></div>
   <div id="bar">
     <button class="ghost" id="attach" title="Kirim file">📎</button>
-    <button class="ghost" id="sound" title="Suara aktif/nonaktif">🔊</button>
     <button class="ghost" id="gear" title="Pengaturan">⚙️</button>
     <button id="compactToggle" type="button" aria-pressed="false" title="Buka chat di jendela mengambang">Pojok</button>
-    <button id="compactClear" type="button" class="secondary" style="display:none" title="Hapus semua chat">Hapus chat</button>
+    <button id="compactClear" type="button" class="ghost" style="display:none" title="Hapus semua chat" aria-label="Hapus semua chat">🗑️</button>
     <input type="file" id="fileInput" hidden>
     <input id="text" placeholder="Tulis pesan..." autocomplete="off">
     <button id="send">Kirim</button>
@@ -91,6 +91,7 @@
     <label>Nama pengguna <input type="text" id="setName" maxlength="30"></label>
     <label>Warna latar <input type="color" id="setBg"></label>
     <label>Warna teks <input type="color" id="setFg"></label>
+    <label>Suara notifikasi <input type="checkbox" id="setSound"></label>
     <label>Ukuran huruf <span><input type="range" id="setSize" min="6" max="24" step="1"> <span id="sizeVal"></span></span></label>
     <div id="adminBox"></div>
     <div class="row">
@@ -114,7 +115,7 @@ const $ = (id) => document.getElementById(id) || (pipOpen() ? pipWindow.document
 const messages = $('messages');
 const main = $('main');
 let ws;
-let isAdmin = false, canLogin = false, onlineUsers = [];
+let isAdmin = false, canLogin = false, onlineUsers = [], messageSeconds = 15;
 const unseenIds = new Set(); // messages from others that are on screen but not yet reported as read
 let imagePreviewCount = 0;
 
@@ -166,7 +167,7 @@ function connect() {
       if (m.user !== name) notify();
       flushSeen();
     }
-    else if (m.type === 'role') { isAdmin = m.admin; canLogin = m.canLogin; showNote(m); refreshAdmin(); syncPojokButton(); }
+    else if (m.type === 'role') { isAdmin = m.admin; canLogin = m.canLogin; messageSeconds = m.seconds; showNote(m); refreshAdmin(); syncPojokButton(); }
     else if (m.type === 'remove') removeMessages(m.ids);
     else if (m.type === 'cleared') { messages.innerHTML = ''; unseenIds.clear(); }
     else if (m.type === 'renamed') {
@@ -196,8 +197,7 @@ function syncPojokButton() {
   const open = pipOpen();
   const button = $('compactToggle');
   button.setAttribute('aria-pressed', String(open));
-  button.textContent = open ? 'Tutup' : 'Pojok';
-  button.title = open ? 'Tutup jendela mengambang' : 'Buka chat di jendela mengambang';
+  button.title = 'Buka chat di jendela mengambang';
   $('compactClear').style.display = open && isAdmin ? 'inline-block' : 'none';
 }
 $('compactClear').addEventListener('click', () => {
@@ -235,7 +235,7 @@ function moveChatInto(win) {
   document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => doc.head.appendChild(node.cloneNode(true)));
   const fit = doc.createElement('style');
   fit.textContent = 'html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif}body{display:block}'
-    + '#side,#imageFloat,#settings,#drop,#pipNote,#gear{display:none!important}'
+    + '#side,#imageFloat,#settings,#drop,#pipNote,#gear,#compactToggle{display:none!important}'
     + '#main{position:static!important;width:100%!important;height:100%!important;border:0!important;border-radius:0!important;box-shadow:none!important}'
     + '#messages{min-height:0;padding:.6em;gap:.45em}.msg{max-width:92%;padding:.45em .75em}#typing{padding:0 .8em}#note{padding:.3em}'
     + '#bar{gap:.45em;padding:.45em}#text{padding:.5em .7em}#bar button{padding:.45em .75em}#bar button.ghost{font-size:1.2em;padding:.25em .5em}';
@@ -387,13 +387,11 @@ function clearUnread() { if (unread) { unread = 0; updateBadge(); } }
 window.addEventListener('focus', clearUnread);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { clearUnread(); flushSeen(); } });
 
-$('sound').onclick = () => {
-  soundOn = !soundOn;
+$('setSound').addEventListener('change', (e) => {
+  soundOn = e.target.checked;
   localStorage.setItem('chatSound', soundOn ? 'on' : 'off');
-  $('sound').textContent = soundOn ? '🔊' : '🔇';
-  beep();
-};
-$('sound').textContent = soundOn ? '🔊' : '🔇';
+  beep(); // short preview when switched on
+});
 // browsers only allow sound after a click: unlock audio on first interaction
 document.addEventListener('click', () => {
   try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch {}
@@ -409,8 +407,28 @@ function renderAdmin() {
   box.innerHTML = '';
   if (isAdmin) {
     const h = document.createElement('h4');
-    h.textContent = 'Admin: ubah nama pengguna';
+    h.textContent = 'Admin';
     box.appendChild(h);
+    const durRow = document.createElement('div');
+    durRow.className = 'arow';
+    const durLabel = document.createElement('label');
+    durLabel.style.flex = '1';
+    durLabel.append('Pesan hilang setelah dibaca (detik)');
+    const durInput = document.createElement('input');
+    durInput.type = 'number'; durInput.min = '1'; durInput.max = '3600'; durInput.step = '1'; durInput.value = messageSeconds;
+    durLabel.appendChild(durInput);
+    const durBtn = document.createElement('button');
+    durBtn.textContent = 'Simpan';
+    durBtn.onclick = () => {
+      const sec = Math.round(Number(durInput.value));
+      if (sec >= 1 && sec <= 3600 && ws.readyState === 1) ws.send(JSON.stringify({ type: 'setDuration', seconds: sec }));
+      else alert('Isi durasi antara 1 dan 3600 detik.');
+    };
+    durRow.append(durLabel, durBtn);
+    box.appendChild(durRow);
+    const nameHead = document.createElement('h4');
+    nameHead.textContent = 'Ubah nama pengguna';
+    box.appendChild(nameHead);
     onlineUsers.forEach((u) => {
       const row = document.createElement('div');
       row.className = 'arow';
@@ -451,6 +469,7 @@ function openSettings() {
   $('setBg').value = settings.bg || toHex(getComputedStyle(document.body).backgroundColor);
   $('setFg').value = settings.fg || toHex(getComputedStyle(document.body).color);
   $('setSize').value = settings.size;
+  $('setSound').checked = soundOn;
   $('sizeVal').textContent = settings.size + 'px';
   renderAdmin();
   $('settings').style.display = 'flex';

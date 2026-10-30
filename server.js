@@ -19,12 +19,13 @@ fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 // Optional config.json next to the app/exe. All keys are optional:
 // { "adminPassword": "secret", "localhostAdmin": true,
 //   "selfDestruct": true, "secondsPerMessage": 15, "maxUnreadHours": 24 }
+// (secondsPerMessage is only the starting value: the admin can change it in Settings and the server remembers it.)
 let config = {};
 try { config = JSON.parse(fs.readFileSync(path.join(BASE_DIR, 'config.json'), 'utf8')); } catch {}
 const ADMIN_PASSWORD = String(config.adminPassword || '');
 const LOCAL_ADMIN = config.localhostAdmin !== false;            // the PC running the server is admin by default
 const SELF_DESTRUCT = config.selfDestruct !== false;            // messages vanish after being read
-const SECONDS_PER_MESSAGE = Number(config.secondsPerMessage) > 0 ? Number(config.secondsPerMessage) : 15;
+const DEFAULT_SECONDS = Number(config.secondsPerMessage) > 0 ? Number(config.secondsPerMessage) : 15;
 const MAX_UNREAD_MS = (Number(config.maxUnreadHours) > 0 ? Number(config.maxUnreadHours) : 24) * 3600 * 1000;
 const sha = (x) => crypto.createHash('sha256').update(String(x)).digest();
 
@@ -78,7 +79,8 @@ app.post('/upload', (req, res) => {
 // state.seen[name][id]   = time (ms) when that person's copy of the message vanishes
 // state.lastExpire[name] = the last vanish time handed out to that person (for the 30s x N queue)
 let messages = [];
-let state = { people: {}, seen: {}, lastExpire: {} };
+let state = { people: {}, seen: {}, lastExpire: {}, secondsPerMessage: 0 }; // secondsPerMessage: set by the admin (0 = use the default)
+const secondsPerMessage = () => (state.secondsPerMessage > 0 ? state.secondsPerMessage : DEFAULT_SECONDS);
 const newId = () => Date.now().toString(36) + crypto.randomBytes(4).toString('hex');
 
 (function loadAll() {
@@ -89,7 +91,7 @@ const newId = () => Date.now().toString(36) + crypto.randomBytes(4).toString('he
   } catch {}
   try {
     const s = JSON.parse(fs.readFileSync(SEEN_FILE, 'utf8'));
-    state = { people: s.people || {}, seen: s.seen || {}, lastExpire: s.lastExpire || {} };
+    state = { people: s.people || {}, seen: s.seen || {}, lastExpire: s.lastExpire || {}, secondsPerMessage: Number(s.secondsPerMessage) || 0 };
   } catch {}
 })();
 
@@ -125,7 +127,7 @@ function visibleTo(name, m) {
   return !(exp && exp <= Date.now());
 }
 
-// Mark messages as read by `name`: each one vanishes SECONDS_PER_MESSAGE after the previous one
+// Mark messages as read by `name`: each one vanishes secondsPerMessage() after the previous one
 // (3 messages read at once -> gone after 30s, 60s, 90s).
 function markSeen(name, ids) {
   const seen = state.seen[name] || (state.seen[name] = {});
@@ -135,7 +137,7 @@ function markSeen(name, ids) {
     if (seen[id]) continue;
     const m = messages.find((x) => x.id === id);
     if (!m || !isRecipient(name, m)) continue;
-    last += SECONDS_PER_MESSAGE * 1000;
+    last += secondsPerMessage() * 1000;
     seen[id] = last;
     changed = true;
   }
@@ -154,11 +156,10 @@ const send = (ws, obj) => { if (ws.readyState === 1) ws.send(JSON.stringify(obj)
 function broadcast(obj) { for (const ws of clients.keys()) send(ws, obj); }
 
 function cleanName(n) {
-  n = String(n || '').trim().slice(0, 30) || 'Anonymous';
-  return n.toLowerCase() === 'system' ? n + '_' : n; // nobody can pose as the System notices
+  return String(n || '').trim().slice(0, 30) || 'Anonymous';
 }
 function sendRole(ws) {
-  send(ws, { type: 'role', admin: !!ws.isAdmin, canLogin: !!ADMIN_PASSWORD, selfDestruct: SELF_DESTRUCT, seconds: SECONDS_PER_MESSAGE });
+  send(ws, { type: 'role', admin: !!ws.isAdmin, canLogin: !!ADMIN_PASSWORD, selfDestruct: SELF_DESTRUCT, seconds: secondsPerMessage() });
 }
 function broadcastUsers() {
   broadcast({ type: 'users', users: [...new Set(clients.values())].sort() });
@@ -236,6 +237,13 @@ wss.on('connection', (ws, req) => {
       for (const c of targets) { clients.set(c, newName); send(c, { type: 'renamed', name: newName }); }
       persist();
       broadcastUsers();
+    } else if (m.type === 'setDuration') {
+      if (!ws.isAdmin) return;
+      const sec = Math.round(Number(m.seconds));
+      if (!(sec >= 1 && sec <= 3600)) { send(ws, { type: 'error', message: 'Durasi harus antara 1 dan 3600 detik' }); return; }
+      state.secondsPerMessage = sec; // applies to messages read from now on
+      persist();
+      for (const c of clients.keys()) sendRole(c); // tells every screen the new number
     } else if (m.type === 'clearAll') {
       if (!ws.isAdmin) return;
       messages = [];
@@ -326,7 +334,7 @@ server.listen(PORT, '0.0.0.0', () => {
     }
   }
   console.log(SELF_DESTRUCT
-    ? ` Self-destruct ON: ${SECONDS_PER_MESSAGE}s per message after reading, unread kept max ${MAX_UNREAD_MS / 3600000}h`
+    ? ` Self-destruct ON: ${secondsPerMessage()}s per message after reading, unread kept max ${MAX_UNREAD_MS / 3600000}h`
     : ' Self-destruct OFF');
   console.log(' (Keep this window open. Close it to stop the chat.)');
   console.log('==============================');

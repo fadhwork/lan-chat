@@ -37,3 +37,26 @@ test('font size can go down to 6px and the floating window follows it', () => {
   assert.match(html, /id="setSize" min="6" max="24"/);
   assert.match(script, /doc\.body\.style\.fontSize = settings\.size \+ 'px'/);
 });
+
+const server = fs.readFileSync('server.js', 'utf8');
+
+test('floating window: no Tutup/sound buttons; delete is a symbol button; Pojok hidden inside the window', () => {
+  assert.doesNotMatch(html, /id="sound"/);
+  assert.doesNotMatch(script, /'Tutup'/);
+  assert.match(html, /id="compactClear"[^>]*class="ghost"[^>]*>🗑️<\/button>/);
+  assert.match(script, /#gear,#compactToggle\{display:none!important\}/);
+  assert.match(html, /id="setSound"/);
+});
+
+test('admin can change how long messages stay after being read', () => {
+  assert.match(script, /type: 'setDuration'/);
+  assert.match(server, /m\.type === 'setDuration'/);
+  assert.match(server, /if \(!ws\.isAdmin\) return;\n      const sec = /);
+  assert.doesNotMatch(server, /SECONDS_PER_MESSAGE/);
+});
+
+test('no System messages in the chat', () => {
+  assert.doesNotMatch(server, /user: 'System'/);
+  assert.doesNotMatch(server, /'system'/);
+  assert.doesNotMatch(script, /'System'/);
+});
